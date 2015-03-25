@@ -4,6 +4,7 @@
 #include <FEHMotor.h>
 #include <FEHServo.h>
 #include <FEHRPS.h>
+#include <math.h>
 
 //Declarations for encoders & motors
 ButtonBoard buttons(FEHIO::Bank3);
@@ -25,7 +26,7 @@ const float SALT_Y = 8.4;
 const float BUTTONS_X_RB = 15.099;
 const float BUTTONS_Y = 64.099;
 const float BUTTONS_X_W = 13.8;
-const float BUTTONS_X_W = 62.8;
+const float BUTTONS_Y_W = 62.8;
 const float GARAGE_X = 6.4;
 const float GARAGE_Y = 59.099;
 const float SWITCH_X = 13.669;
@@ -244,12 +245,38 @@ void pushButtons(){
 } //pushButtons
 
 /*
+ * This method will turn the crank
+ */
+void turnCrank(){
+    if (CdS.Value() > .3){ //the light is blue
+        servo.SetDegree(180);
+        move(percent, cts_per_in); //move forward an inch
+        servo.SetDegree(0);
+        move(-percent, cts_per_in); //move backwkards an inch
+        servo.SetDegree(180);
+        move(percent, cts_per_in); //move forward an inch
+        servo.SetDegree(0);
+        move(-percent, cts_per_in); //move backwards an inch
+
+    } else{ //the light is red
+        servo.SetDegree(0);
+        move(percent, cts_per_in); //move forward an inch
+        servo.SetDegree(180);
+        move(-percent, cts_per_in); //move backwkards an inch
+        servo.SetDegree(0);
+        move(percent, cts_per_in); //move forward an inch
+        servo.SetDegree(180);
+        move(-percent, cts_per_in); //move backwards an inch
+    }
+} //turnCrank
+
+/*
  * This method will pick up the salt bag.
  * The salt bag is to be dragged by the robot for the remainder of the course,
  * until it is deposited in the garage.
  */
 void getSalt(){
-    servoSalt.SetDegree(90);
+    servoSalt.SetDegree(172);
 } //getSalt
 
 /*
@@ -257,7 +284,7 @@ void getSalt(){
  */
 void depositSalt(){
     servoSalt.SetDegree(0);
-    move(-(percent-toSlow), counts); //back up and push salt into garage
+    move(-(percent-toSlow), cts_per_in*1); //back up and push salt into garage
 } //depositSalt
 
 /*
@@ -280,13 +307,21 @@ void toggleSwitch(){
 
 /*
  * This method will take the robot from the start light, to the salt bag.
+ * @pre
+ *      the robot will be at the start light
  */
 void goToSalt(){
-
+    move(-percent, cts_per_in*12);
+    turn_left(percent-toSlow, cts_per_deg*45); //angle robot towards salt
+    move(-percent, cts_per_in*19); //move to the salt
+    //check x and y
+    check_heading(135);
 } //goToSalt
 
 /*
  * This method will take the robot from the salt bag to the crank.
+ * @pre
+ *      the robot will be at the salt bag
  */
 void goToCrank(){
 
@@ -294,6 +329,8 @@ void goToCrank(){
 
 /*
  * This method will take the robot from the crank to the buttons
+ * @pre
+ *      the robot will be at the crank
  */
 void goToButtons(){
 
@@ -303,6 +340,8 @@ void goToButtons(){
  * This method will take the robot from the buttons, to the garage.
  * After this method is called, the robot should be in good position
  * to deposit the salt into the garage.
+ * @pre
+ *      the robot will be at the buttons
  */
 void goToGarage(){
 
@@ -312,6 +351,8 @@ void goToGarage(){
  * Finally, this method will take the robot from the garage, to the oil switch.
  * After this method is called, the robot should go down the avalanche ramp and
  * be placed in a good position to toggle the switch.
+ * @pre
+ *      the robot will be at the garage
  */
 void goToSwitch(){
 
@@ -324,7 +365,7 @@ void goToSwitch(){
  */
 void check_heading(float heading){
     const int turnPercent = 50;
-    float change = (int)abs(heading-RPS.Heading());
+    float change = (int)(abs(heading-RPS.Heading()));
     if(change>180){ change = 360-change; }
     while(change > 2){
         float curr_Heading = RPS.Heading();
@@ -347,31 +388,16 @@ void check_heading(float heading){
 } //check_heading
 
 /*
- * This method was created to efficiently complete performance test 4
+ * This method was created to efficiently complete performance test 5
  */
-void performanceTest4(){
-    turn_left(percent-toSlow, cts_per_deg*55); //angle robot towards salt
-    move(-percent, cts_per_in*27.5); //move to the salt
-    //check x and y
-    //check heading
-    getSalt();
-    turn_right(percent-toSlow, cts_per_deg*55); //prepare to go up ramp
-    //check heading
-    move(percent, cts_per_in*46); //go up ramp
-    turn_right(percent - toSlow, cts_per_deg*90); //turn towards garage
-    //check x and y
-    //check heading
-    move(-percent, cts_per_in*27); //get to garage
-    depositSalt();
-    move(percent, cts_per_in*27); //get back to last point
-    turn_left(percent, cts_per_deg*90); //prepare to go down ramp
-    move(percent, cts_per_in*27); //go down ramp
-    turn_left(percent-toSlow, cts_per_deg*45); //prepare to go to switch
-    move(percent, cts_per_in*27); //get to switch
-    //check x and y
-    //check heading
-    toggleSwitch();
-}//performanceTest4
+void performanceTest5(){
+    move(percent, cts_per_in*13.5);
+    turn_left(percent, cts_per_deg*90);
+    move(percent, cts_per_in*11);
+    turn_left(percent, cts_per_deg*90);
+    move(percent, cts_per_in*38);
+    turnCrank();
+} //performanceTest5
 
 /*
  * The main method
@@ -381,7 +407,7 @@ int main(void)
     LCD.Clear( FEHLCD::Black );
     LCD.SetFontColor( FEHLCD::White );
 
-    const arrayLength = 5; //sets length of task array
+    const int arrayLength = 5; //sets length of task array
 
     /*
      * Initialize task array.
@@ -390,12 +416,12 @@ int main(void)
     int taskArray[arrayLength] = {0, 1, 2, 3, 4};
 
     //initialize positions of servo motors
-    servoSalt.SetDegree(0);
+    servoSalt.SetDegree(74);
     servo.SetDegree(0);
 
     while(CdS.Value()>1); //start on the light
 
-    performanceTest4();
+    performanceTest5();
 
 //    for (int i=0; i<arrayLength; i++){
 //        switch (taskArray[i]){
