@@ -78,6 +78,8 @@ void move(int percent, int counts) //using encoders
         LCD.WriteLine(right_encoder.Counts());
         LCD.Write("Left Encoder Counts: ");
         LCD.WriteLine(left_encoder.Counts());
+        LCD.Write("CdS Value: ");
+        LCD.WriteLine(CdS.Value());
     }
 
     brake(percent);
@@ -526,16 +528,20 @@ void performanceTest5(){
     Sleep(1000);
     turnCrank(cds_value);
     Sleep(1000);
-    servoSalt.SetDegree(150);
-    move(-percent, cts_per_in*40);
+    servoSalt.SetDegree(82);
+    move(-percent, cts_per_in*43);
     turn_right(percent-8, cts_per_deg*90);
-    servoSalt.SetDegree(120);
-    move(-percent, cts_per_in*10);
-    turn_left(percent+8, cts_per_in*90);
+    move(-percent, cts_per_in*14);
+    servoSalt.SetDegree(126);
+    Sleep(1000);
+    turn_left(percent+8, cts_per_deg*90);
+    /*
     move(-percent, cts_per_in*8);
     turn_right(percent+8, cts_per_deg*90);
     move(-percent, cts_per_in*7);
     toggleSwitch();
+*/
+
 
 } //performanceTest5
 
