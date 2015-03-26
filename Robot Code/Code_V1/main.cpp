@@ -16,6 +16,7 @@ FEHServo servo(FEHServo::Servo7);
 FEHServo servoSalt(FEHServo::Servo4);
 AnalogInputPin CdS(FEHIO::P0_0);
 
+
 //declares RPS location constants for key locations
 const float START_LIGHT_X = 18;
 const float START_LIGHT_Y = 30;
@@ -33,7 +34,7 @@ const float SWITCH_X = 13.669;
 const float SWITCH_Y = 9.9;
 
 const int percent = 60; //sets the motor percent for the rest of the code
-const int toSlow = 25; //this int will be the fix required for the robot to travel among the course
+const int toSlow = 15; //this int will be the fix required for the robot to travel among the course
 const float cts_per_in= 3.704; //counts per inch
 const float cts_per_deg = .1776; //counts per degree
 
@@ -78,11 +79,18 @@ void move(int percent, int counts) //using encoders
 
     //While the average of the left and right encoder are less than counts,
     //keep running motors
-    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts);
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts){
+        LCD.Write("Right Encoder Counts: ");
+        LCD.WriteLine(right_encoder.Counts());
+        LCD.Write("Left Encoder Counts: ");
+        LCD.WriteLine(left_encoder.Counts());
+    }
 
     //Turn off motors
     right_motor.Stop();
     left_motor.Stop();
+
+    Sleep(1000);
 } //move
 
 /*
@@ -113,6 +121,8 @@ void turn_right(int percent, int counts) //using encoders
     //Turn off motors
     right_motor.Stop();
     left_motor.Stop();
+
+    Sleep(1000);
 } //turn_right
 
 /*
@@ -141,6 +151,8 @@ void turn_left(int percent, int counts) //using encoders
     //Turn off motors
     right_motor.Stop();
     left_motor.Stop();
+
+    Sleep(1000);
 } //turn_left
 
 /*
@@ -250,22 +262,30 @@ void pushButtons(){
 void turnCrank(){
     if (CdS.Value() > .3){ //the light is blue
         servo.SetDegree(180);
+        Sleep(500);
         move(percent, cts_per_in); //move forward an inch
         servo.SetDegree(0);
+        Sleep(500);
         move(-percent, cts_per_in); //move backwkards an inch
         servo.SetDegree(180);
+        Sleep(500);
         move(percent, cts_per_in); //move forward an inch
         servo.SetDegree(0);
+        Sleep(500);
         move(-percent, cts_per_in); //move backwards an inch
 
     } else{ //the light is red
         servo.SetDegree(0);
+        Sleep(500);
         move(percent, cts_per_in); //move forward an inch
         servo.SetDegree(180);
+        Sleep(500);
         move(-percent, cts_per_in); //move backwkards an inch
         servo.SetDegree(0);
+        Sleep(500);
         move(percent, cts_per_in); //move forward an inch
         servo.SetDegree(180);
+        Sleep(500);
         move(-percent, cts_per_in); //move backwards an inch
     }
 } //turnCrank
@@ -391,12 +411,24 @@ void check_heading(float heading){
  * This method was created to efficiently complete performance test 5
  */
 void performanceTest5(){
-    move(percent, cts_per_in*13.5);
-    turn_left(percent, cts_per_deg*90);
+    move(-percent, cts_per_in*13.5);
+    turn_right(percent, cts_per_deg*90);
     move(percent, cts_per_in*11);
     turn_left(percent, cts_per_deg*90);
+    servoSalt.SetDegree(174);
     move(percent, cts_per_in*38);
+    Sleep(1000);
     turnCrank();
+    Sleep(1000);
+    move(-percent, cts_per_in*38);
+    turn_right(percent, cts_per_deg*90);
+    move(-percent, cts_per_in*14);
+    turn_left(percent, cts_per_in*90);
+    move(-percent, cts_per_in*8);
+    turn_right(-percent, cts_per_deg*90);
+    move(-percent, cts_per_in*7);
+    toggleSwitch();
+
 } //performanceTest5
 
 /*
@@ -418,6 +450,10 @@ int main(void)
     //initialize positions of servo motors
     servoSalt.SetDegree(74);
     servo.SetDegree(0);
+
+    //initialize encoder thresholds
+    right_encoder.SetThresholds(.5, 2);
+    left_encoder.SetThresholds(.5, 2);
 
     while(CdS.Value()>1); //start on the light
 
