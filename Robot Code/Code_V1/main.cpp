@@ -36,7 +36,7 @@ const float SWITCH_Y = 9.9;
 const int percent = 60; //sets the motor percent for the rest of the code
 const int toSlow = 15; //this int will be the fix required for the robot to travel among the course
 const float cts_per_in= 3.704; //counts per inch
-const float cts_per_deg = .1776; //counts per degree
+const float cts_per_deg = .1859; //counts per degree
 
 //declares prototypes for functions
 void goToCrank();
@@ -54,8 +54,37 @@ void toggleSwitch();
 void check_heading(float heading);
 
 void move(int percent, int counts);
+void move_adjusted(int percent, int counts);
+void brake(int percent);
 void turn_left(int percent, int counts);
 void turn_right(int percent, int counts);
+
+
+void move(int percent, int counts) //using encoders
+{
+    //Reset encoder counts
+    right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+
+    //Set both motors to desired percent
+    right_motor.SetPercent(percent);
+    left_motor.SetPercent(percent);
+
+
+    //While the average of the left and right encoder are less than counts,
+    //keep running motors
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts){
+        LCD.Write("Right Encoder Counts: ");
+        LCD.WriteLine(right_encoder.Counts());
+        LCD.Write("Left Encoder Counts: ");
+        LCD.WriteLine(left_encoder.Counts());
+    }
+
+    brake(percent);
+
+    Sleep(1000);
+} //move
+
 
 /*
  *This method allows the robot to move for a certain number of counts
@@ -67,31 +96,62 @@ void turn_right(int percent, int counts);
  *              if @param percent is negative, robot will move backwards
  *              else robot will move forwards
  */
-void move(int percent, int counts) //using encoders
+void move_adjusted(int percent, int counts) //using encoders
 {
     //Reset encoder counts
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
 
     //Set both motors to desired percent
-    right_motor.SetPercent(percent);
-    left_motor.SetPercent(percent);
+    right_motor.SetPercent((percent*2)/3);
+    left_motor.SetPercent((percent*2)/3);
+
 
     //While the average of the left and right encoder are less than counts,
     //keep running motors
-    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts){
+    int current_counts = (left_encoder.Counts() + right_encoder.Counts()) / 2.;
+    while(current_counts < counts/3){
         LCD.Write("Right Encoder Counts: ");
         LCD.WriteLine(right_encoder.Counts());
         LCD.Write("Left Encoder Counts: ");
         LCD.WriteLine(left_encoder.Counts());
+
+        //Scales from half percent to full percent over the first third of the path
+        right_motor.SetPercent((percent*2)/3 + percent * current_counts/counts);     //Don't ask
+        left_motor.SetPercent((percent*2)/3 + percent * current_counts/counts);      //Don't ask
+        current_counts = (left_encoder.Counts() + right_encoder.Counts()) / 2.;
     }
+
+    right_motor.SetPercent(percent);
+    left_motor.SetPercent(percent);
+
+    while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts);
+
+    brake(percent);
+
+    Sleep(1000);
+} //move_adjusted
+
+
+/*
+ * This method will allow the robot to brake more quickly
+ */
+void brake(int percent){
+    if (percent>0){
+        right_motor.SetPercent(-100);
+        left_motor.SetPercent(-100);
+    } else {
+        right_motor.SetPercent(100);
+        left_motor.SetPercent(100);
+    }
+
+    Sleep(200);
 
     //Turn off motors
     right_motor.Stop();
     left_motor.Stop();
 
-    Sleep(1000);
-} //move
+} //brake
 
 /*
  *This method allows the robot to turn right for a certain number of counts
@@ -117,6 +177,11 @@ void turn_right(int percent, int counts) //using encoders
     //keep running motors
 
     while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts);
+
+    //brake
+    right_motor.SetPercent(90);
+    left_motor.SetPercent(-90);
+    Sleep(200);
 
     //Turn off motors
     right_motor.Stop();
@@ -147,6 +212,12 @@ void turn_left(int percent, int counts) //using encoders
     //keep running motors
 
     while((left_encoder.Counts() + right_encoder.Counts()) / 2. < counts);
+
+
+    //brake
+    right_motor.SetPercent(-90);
+    left_motor.SetPercent(90);
+    Sleep(150);
 
     //Turn off motors
     right_motor.Stop();
@@ -259,33 +330,59 @@ void pushButtons(){
 /*
  * This method will turn the crank
  */
-void turnCrank(){
-    if (CdS.Value() > .3){ //the light is blue
-        servo.SetDegree(180);
-        Sleep(500);
+void turnCrank(float cds_value){
+    if (cds_value > .3){ //the light is blue
+        servo.SetDegree(120);
+        Sleep(1200);
         move(percent, cts_per_in); //move forward an inch
-        servo.SetDegree(0);
         Sleep(500);
+        servo.SetDegree(0);
+        Sleep(1200);
         move(-percent, cts_per_in); //move backwkards an inch
-        servo.SetDegree(180);
         Sleep(500);
+
+        servo.SetDegree(120);
+        Sleep(1200);
         move(percent, cts_per_in); //move forward an inch
-        servo.SetDegree(0);
         Sleep(500);
+        servo.SetDegree(0);
+        Sleep(1200);
+        move(-percent, cts_per_in); //move backwkards an inch
+        Sleep(500);
+
+        servo.SetDegree(120);
+        Sleep(1200);
+        move(percent, cts_per_in); //move forward an inch
+        Sleep(500);
+        servo.SetDegree(0);
+        Sleep(1200);
         move(-percent, cts_per_in); //move backwards an inch
 
     } else{ //the light is red
         servo.SetDegree(0);
-        Sleep(500);
+        Sleep(1200);
         move(percent, cts_per_in); //move forward an inch
-        servo.SetDegree(180);
         Sleep(500);
+        servo.SetDegree(120);
+        Sleep(1200);
         move(-percent, cts_per_in); //move backwkards an inch
+        Sleep(500);
+
         servo.SetDegree(0);
-        Sleep(500);
+        Sleep(1200);
         move(percent, cts_per_in); //move forward an inch
-        servo.SetDegree(180);
         Sleep(500);
+        servo.SetDegree(120);
+        Sleep(1200);
+        move(-percent, cts_per_in); //move backwkards an inch
+        Sleep(500);
+
+        servo.SetDegree(0);
+        Sleep(1200);
+        move(percent, cts_per_in); //move forward an inch
+        Sleep(500);
+        servo.SetDegree(120);
+        Sleep(1200);
         move(-percent, cts_per_in); //move backwards an inch
     }
 } //turnCrank
@@ -411,21 +508,32 @@ void check_heading(float heading){
  * This method was created to efficiently complete performance test 5
  */
 void performanceTest5(){
+    float begin_heading = RPS.Heading();
+
     move(-percent, cts_per_in*13.5);
-    turn_right(percent, cts_per_deg*90);
+    turn_right(percent-8, cts_per_deg*90);
     move(percent, cts_per_in*11);
-    turn_left(percent, cts_per_deg*90);
+    turn_left(percent-8, cts_per_deg*90);
     servoSalt.SetDegree(174);
+
+    //Split up the up ramp movement so it RPS checks before it gets there
     move(percent, cts_per_in*38);
+    float cds_value = CdS.Value();
+    //check_heading((float)(((int)begin_heading+180) % 360));
+    move(percent, cts_per_in*6);
+
+    servoSalt.SetDegree(180);
     Sleep(1000);
-    turnCrank();
+    turnCrank(cds_value);
     Sleep(1000);
-    move(-percent, cts_per_in*38);
-    turn_right(percent, cts_per_deg*90);
-    move(-percent, cts_per_in*14);
-    turn_left(percent, cts_per_in*90);
+    servoSalt.SetDegree(150);
+    move(-percent, cts_per_in*40);
+    turn_right(percent-8, cts_per_deg*90);
+    servoSalt.SetDegree(120);
+    move(-percent, cts_per_in*10);
+    turn_left(percent+8, cts_per_in*90);
     move(-percent, cts_per_in*8);
-    turn_right(-percent, cts_per_deg*90);
+    turn_right(percent+8, cts_per_deg*90);
     move(-percent, cts_per_in*7);
     toggleSwitch();
 
@@ -448,12 +556,14 @@ int main(void)
     int taskArray[arrayLength] = {0, 1, 2, 3, 4};
 
     //initialize positions of servo motors
-    servoSalt.SetDegree(74);
+    servoSalt.SetDegree(82);
     servo.SetDegree(0);
 
     //initialize encoder thresholds
     right_encoder.SetThresholds(.5, 2);
     left_encoder.SetThresholds(.5, 2);
+
+    //RPS.InitializeMenu();
 
     while(CdS.Value()>1); //start on the light
 
