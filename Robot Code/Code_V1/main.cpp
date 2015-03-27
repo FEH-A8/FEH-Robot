@@ -17,6 +17,8 @@ FEHServo servoSalt(FEHServo::Servo4);
 AnalogInputPin CdS(FEHIO::P0_0);
 
 
+
+
 //declares RPS location constants for key locations
 const float START_LIGHT_X = 18;
 const float START_LIGHT_Y = 30;
@@ -67,7 +69,7 @@ void move(int percent, int counts) //using encoders
     left_encoder.ResetCounts();
 
     //Set both motors to desired percent
-    right_motor.SetPercent(percent);
+    right_motor.SetPercent((percent>0)?(percent+1):(percent-1));
     left_motor.SetPercent(percent);
 
 
@@ -171,7 +173,7 @@ void turn_right(int percent, int counts) //using encoders
     //Set both motors to desired percent
     //hint: set right motor forward, left motor backward
 
-    right_motor.SetPercent(-percent);
+    right_motor.SetPercent(-percent-1);
     left_motor.SetPercent(percent);
 
 
@@ -207,7 +209,7 @@ void turn_left(int percent, int counts) //using encoders
 
     //Set both motors to desired percent
 
-    right_motor.SetPercent(percent);
+    right_motor.SetPercent(percent+1);
     left_motor.SetPercent(-percent);
 
     //While the average of the left and right encoder are less than counts,
@@ -358,7 +360,8 @@ void turnCrank(float cds_value){
         Sleep(500);
         servo.SetDegree(0);
         Sleep(1200);
-        move(-percent, cts_per_in); //move backwards an inch
+        move(-percent, cts_per_in); //move backwkards an inch
+        Sleep(500);
 
     } else{ //the light is red
         servo.SetDegree(0);
@@ -486,15 +489,15 @@ void check_heading(float heading){
     const int turnPercent = 50;
     float change = (int)(abs(heading-RPS.Heading()));
     if(change>180){ change = 360-change; }
-    while(change > 2){
+    while(change > 4){
         float curr_Heading = RPS.Heading();
         if(curr_Heading < heading || (curr_Heading > 270 && heading < 90)){ //Turn right
-            right_motor.SetPercent(-turnPercent);
-            left_motor.SetPercent(turnPercent);
-        } //if
-        else { //Turn left
             right_motor.SetPercent(turnPercent);
             left_motor.SetPercent(-turnPercent);
+        } //if
+        else { //Turn left
+            right_motor.SetPercent(-turnPercent);
+            left_motor.SetPercent(turnPercent);
         } //else
         Sleep(30);
         change = (int)abs(heading-RPS.Heading());
@@ -515,19 +518,26 @@ void performanceTest5(){
     move(-percent, cts_per_in*13.5);
     turn_right(percent-8, cts_per_deg*90);
     move(percent, cts_per_in*11);
-    turn_left(percent-8, cts_per_deg*90);
+    turn_left(percent-8, cts_per_deg*100);
+
+    for(int i = 82; i <= 174; i+= 23){
+        servoSalt.SetDegree(i);
+        Sleep(350);
+    }
     servoSalt.SetDegree(174);
 
     //Split up the up ramp movement so it RPS checks before it gets there
     move(percent, cts_per_in*38);
     float cds_value = CdS.Value();
-    //check_heading((float)(((int)begin_heading+180) % 360));
-    move(percent, cts_per_in*6);
+    check_heading(begin_heading);
 
-    servoSalt.SetDegree(180);
+    servoSalt.SetDegree(174);
+    Sleep(1000);
+    move(percent, cts_per_in*6);
     Sleep(1000);
     turnCrank(cds_value);
     Sleep(1000);
+
     servoSalt.SetDegree(82);
     move(-percent, cts_per_in*43);
     turn_right(percent-8, cts_per_deg*90);
@@ -550,6 +560,9 @@ void performanceTest5(){
  */
 int main(void)
 {
+
+    RPS.InitializeMenu();
+
     LCD.Clear( FEHLCD::Black );
     LCD.SetFontColor( FEHLCD::White );
 
@@ -569,9 +582,8 @@ int main(void)
     right_encoder.SetThresholds(.5, 2);
     left_encoder.SetThresholds(.5, 2);
 
-    //RPS.InitializeMenu();
 
-    while(CdS.Value()>1); //start on the light
+    while(CdS.Value()> .6); //start on the light
 
     performanceTest5();
 
