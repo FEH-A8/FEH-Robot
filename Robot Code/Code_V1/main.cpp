@@ -38,13 +38,13 @@ const float cts_per_in= 3.704; //counts per inch
 const float cts_per_deg = .1859; //counts per degree
 
 //declares prototypes for functions
-void goToCrank();
+float goToCrank();
 void goToButtons();
 void goToSalt();
 void goToGarage();
 void goToSwitch();
 
-void turnCrank();
+void turnCrank(float light);
 void pushButtons();
 void getSalt();
 void depositSalt();
@@ -332,60 +332,34 @@ void pushButtons(){
  * This method will turn the crank
  */
 void turnCrank(float cds_value){
+
+    check_heading(90);
+
     if (cds_value > .3){ //the light is blue
-        servo.SetDegree(120);
-        Sleep(1200);
-        move(percent, cts_per_in); //move forward an inch
-        Sleep(500);
-        servo.SetDegree(0);
-        Sleep(1200);
-        move(-percent, cts_per_in); //move backwkards an inch
-        Sleep(500);
 
-        servo.SetDegree(120);
-        Sleep(1200);
-        move(percent, cts_per_in); //move forward an inch
-        Sleep(500);
-        servo.SetDegree(0);
-        Sleep(1200);
-        move(-percent, cts_per_in); //move backwkards an inch
-        Sleep(500);
-
-        servo.SetDegree(120);
-        Sleep(1200);
-        move(percent, cts_per_in); //move forward an inch
-        Sleep(500);
-        servo.SetDegree(0);
-        Sleep(1200);
-        move(-percent, cts_per_in); //move backwkards an inch
-        Sleep(500);
+        for (int i=0; i<3; i++){
+            servo.SetDegree(120);
+            Sleep(1200);
+            move(percent, cts_per_in); //move forward an inch
+            Sleep(500);
+            servo.SetDegree(0);
+            Sleep(1200);
+            move(-percent, cts_per_in); //move backwkards an inch
+            Sleep(500);
+        }
 
     } else{ //the light is red
-        servo.SetDegree(0);
-        Sleep(1200);
-        move(percent, cts_per_in); //move forward an inch
-        Sleep(500);
-        servo.SetDegree(120);
-        Sleep(1200);
-        move(-percent, cts_per_in); //move backwkards an inch
-        Sleep(500);
 
-        servo.SetDegree(0);
-        Sleep(1200);
-        move(percent, cts_per_in); //move forward an inch
-        Sleep(500);
-        servo.SetDegree(120);
-        Sleep(1200);
-        move(-percent, cts_per_in); //move backwkards an inch
-        Sleep(500);
-
-        servo.SetDegree(0);
-        Sleep(1200);
-        move(percent, cts_per_in); //move forward an inch
-        Sleep(500);
-        servo.SetDegree(120);
-        Sleep(1200);
-        move(-percent, cts_per_in); //move backwards an inch
+        for (int i=0; i<3; i++){
+            servo.SetDegree(0);
+            Sleep(1200);
+            move(percent, cts_per_in); //move forward an inch
+            Sleep(500);
+            servo.SetDegree(120);
+            Sleep(1200);
+            move(-percent, cts_per_in); //move backwkards an inch
+            Sleep(500);
+        }
     }
 } //turnCrank
 
@@ -431,7 +405,7 @@ void toggleSwitch(){
 void goToSalt(){
     move(-percent, cts_per_in*12);
     turn_left(percent-toSlow, cts_per_deg*45); //angle robot towards salt
-    move(-percent, cts_per_in*19); //move to the salt
+    move(-percent, cts_per_in*2); //move to the salt
     //check x and y
     check_heading(135);
 } //goToSalt
@@ -441,10 +415,11 @@ void goToSalt(){
  * @pre
  *      the robot will be at the salt bag
  */
-void goToCrank(){
+float goToCrank(){
     turn_right(percent-toSlow, cts_per_deg*45);
     check_heading(90);
     move(percent, cts_per_in*46);
+    return CdS.Value();
 } //goToCrank
 
 /*
@@ -454,7 +429,7 @@ void goToCrank(){
  */
 void goToButtons(){
     turn_left(percent-toSlow, cts_per_deg*45);
-    check_heading(315);
+    check_heading(135);
     move(percent, cts_per_in*11);
 } //goToButtons
 
@@ -467,7 +442,9 @@ void goToButtons(){
  */
 void goToGarage(){
     turn_left(percent-toSlow, cts_per_deg*90);
-    check_heading(135);
+    move(-percent, cts_per_in*2);
+    turn_right(percent - toSlow, cts_per_deg*90);
+    check_heading(315);
 } //goToGarage
 
 /*
@@ -479,9 +456,9 @@ void goToGarage(){
  */
 void goToSwitch(){
     servoSalt.SetDegree(82);
-    turn_left(135);
-    check_heading(270);
-    move(percent, cts_per_in*29);
+    turn_left(percent-toSlow, cts_per_deg*45);
+    check_heading(180);
+    move(-percent, cts_per_in*29);
     servoSalt.SetDegree(120);
     move(percent, cts_per_in*4);
 } //goToSwitch
@@ -542,10 +519,9 @@ int main(void)
     right_encoder.SetThresholds(.5, 2);
     left_encoder.SetThresholds(.5, 2);
 
+    float light;
 
     while(CdS.Value()> .6); //start on the light
-
-    performanceTest5();
 
     for (int i=0; i<arrayLength; i++){
         switch (taskArray[i]){
@@ -554,12 +530,12 @@ int main(void)
             getSalt();
             break;
         case 1:
-            goToCrank();
-            turnCrank();
+            light = goToCrank();
+            turnCrank(light);
             break;
         case 2:
             goToButtons();
-            turnButtons();
+            pushButtons();
             break;
         case 3:
             goToGarage();
