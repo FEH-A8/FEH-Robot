@@ -416,14 +416,13 @@ void depositSalt(){
  *          else the switch must be pushed to the right.
  */
 void toggleSwitch(){
+    check_heading(270);
     if (RPS.OilDirec()==0){
-        turn_right(percent-toSlow, cts_per_deg*45);
-        servoSalt.SetDegree(45);
-        turn_left(percent-toSlow, cts_per_deg*50);
+        servoSalt.SetDegree(140);
+        move(percent, cts_per_in*5);
     } else{
-        turn_left(percent-toSlow, cts_per_deg*45);
-        servoSalt.SetDegree(45);
-        turn_right(percent-toSlow, cts_per_deg*50);
+        servoSalt.SetDegree(140);
+        move(percent, cts_per_in*5);
     }
 } //toggleSwitch
 
@@ -446,7 +445,9 @@ void goToSalt(){
  *      the robot will be at the salt bag
  */
 void goToCrank(){
-
+    turn_right(percent-toSlow, cts_per_deg*45);
+    check_heading(90);
+    move(percent, cts_per_in*46);
 } //goToCrank
 
 /*
@@ -455,7 +456,9 @@ void goToCrank(){
  *      the robot will be at the crank
  */
 void goToButtons(){
-
+    turn_left(percent-toSlow, cts_per_deg*45);
+    check_heading(315);
+    move(percent, cts_per_in*11);
 } //goToButtons
 
 /*
@@ -466,7 +469,8 @@ void goToButtons(){
  *      the robot will be at the buttons
  */
 void goToGarage(){
-
+    turn_left(percent-toSlow, cts_per_deg*90);
+    check_heading(135);
 } //goToGarage
 
 /*
@@ -477,7 +481,12 @@ void goToGarage(){
  *      the robot will be at the garage
  */
 void goToSwitch(){
-
+    servoSalt.SetDegree(82);
+    turn_left(135);
+    check_heading(270);
+    move(percent, cts_per_in*29);
+    servoSalt.SetDegree(120);
+    move(percent, cts_per_in*4);
 } //goToSwitch
 
 /*
@@ -508,52 +517,6 @@ void check_heading(float heading){
     right_motor.SetPercent(0);
     left_motor.SetPercent(0);
 } //check_heading
-
-/*
- * This method was created to efficiently complete performance test 5
- */
-void performanceTest5(){
-    float begin_heading = RPS.Heading();
-
-    move(-percent, cts_per_in*13.5);
-    turn_right(percent-8, cts_per_deg*90);
-    move(percent, cts_per_in*11);
-    turn_left(percent-8, cts_per_deg*100);
-
-    for(int i = 82; i <= 174; i+= 23){
-        servoSalt.SetDegree(i);
-        Sleep(350);
-    }
-    servoSalt.SetDegree(174);
-
-    //Split up the up ramp movement so it RPS checks before it gets there
-    move(percent, cts_per_in*38);
-    float cds_value = CdS.Value();
-    check_heading(begin_heading);
-
-    servoSalt.SetDegree(174);
-    Sleep(1000);
-    move(percent, cts_per_in*6);
-    Sleep(1000);
-    turnCrank(cds_value);
-    Sleep(1000);
-
-    servoSalt.SetDegree(82);
-    move(-percent, cts_per_in*43);
-    turn_right(percent-8, cts_per_deg*90);
-    move(-percent, cts_per_in*14);
-    servoSalt.SetDegree(126);
-    Sleep(1000);
-    turn_left(percent+8, cts_per_deg*90);
-    /*
-    move(-percent, cts_per_in*8);
-    turn_right(percent+8, cts_per_deg*90);
-    move(-percent, cts_per_in*7);
-    toggleSwitch();
-*/
-
-
-} //performanceTest5
 
 /*
  * The main method
@@ -587,28 +550,28 @@ int main(void)
 
     performanceTest5();
 
-//    for (int i=0; i<arrayLength; i++){
-//        switch (taskArray[i]){
-//        case 0:
-//            goToSalt();
-//            getSalt();
-//            break;
-//        case 1:
-//            goToCrank();
-//            turnCrank();
-//            break;
-//        case 2:
-//            goToButtons();
-//            turnButtons();
-//            break;
-//        case 3:
-//            goToGarage();
-//            depositSalt();
-//        case 4:
-//            goToSwitch();
-//            toggleSwitch();
-//        } //switch
-//    } //for
+    for (int i=0; i<arrayLength; i++){
+        switch (taskArray[i]){
+        case 0:
+            goToSalt();
+            getSalt();
+            break;
+        case 1:
+            goToCrank();
+            turnCrank();
+            break;
+        case 2:
+            goToButtons();
+            turnButtons();
+            break;
+        case 3:
+            goToGarage();
+            depositSalt();
+        case 4:
+            goToSwitch();
+            toggleSwitch();
+        } //switch
+    } //for
 
     return 0;
 } //main
