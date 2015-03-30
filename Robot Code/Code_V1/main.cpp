@@ -16,9 +16,6 @@ FEHServo servo(FEHServo::Servo7);
 FEHServo servoSalt(FEHServo::Servo4);
 AnalogInputPin CdS(FEHIO::P0_0);
 
-
-
-
 //declares RPS location constants for key locations
 const float START_LIGHT_X = 18;
 const float START_LIGHT_Y = 30;
