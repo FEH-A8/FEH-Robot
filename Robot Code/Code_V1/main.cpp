@@ -360,6 +360,15 @@ void turnCrank(float cds_value){
             Sleep(1200);
             move(percent, cts_per_in); //move forward an inch
             Sleep(500);
+            double now = TimeNow();
+            double timeout = 12.0;
+            while (bump.Value() || TimeNow()-now > timeout){
+              move(-percent, cts_per_in); //move backwkards an inch
+              check_heading(CRANK_HEADING);
+              //check x
+              //check y
+              move(percent, cts_per_in); //move forwards an inch
+            }
             servo.SetDegree(0);
             Sleep(1200);
             move(-percent, cts_per_in); //move backwkards an inch
@@ -374,6 +383,15 @@ void turnCrank(float cds_value){
             Sleep(1200);
             move(percent, cts_per_in); //move forward an inch
             Sleep(500);
+            double now = TimeNow();
+            double timeout = 12.0;
+            while(bump.Value() || TimeNow()-now > timeout){
+                move(-percent, cts_per_in); //move backwards an inch
+                check_heading(CRANK_HEADING);
+                //check x
+                //check y
+                move(percent, cts_per_in);
+            }
             servo.SetDegree(120);
             Sleep(1200);
             move(-percent, cts_per_in); //move backwkards an inch
