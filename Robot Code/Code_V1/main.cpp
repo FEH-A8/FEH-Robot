@@ -15,27 +15,44 @@ FEHMotor left_motor(FEHMotor::Motor1);
 FEHServo servo(FEHServo::Servo7);
 FEHServo servoSalt(FEHServo::Servo4);
 AnalogInputPin CdS(FEHIO::P0_0);
+DigitalInputPin bump (FEHIO::P2_3);
 
 //declares RPS location constants for key locations
-const float START_LIGHT_X = 18;
-const float START_LIGHT_Y = 30;
-const float CRANK_X = 28.8;
-const float CRANK_Y = 58.3;
-const float SALT_X = 27.9;
-const float SALT_Y = 8.4;
-const float BUTTONS_X_RB = 15.099;
-const float BUTTONS_Y = 64.099;
-const float BUTTONS_X_W = 13.8;
-const float BUTTONS_Y_W = 62.8;
-const float GARAGE_X = 6.4;
-const float GARAGE_Y = 59.099;
-const float SWITCH_X = 13.669;
-const float SWITCH_Y = 9.9;
+//Course D was used for these values
+const float START_LIGHT_X = 18.7;
+const float START_LIGHT_Y = 28.2;
+
+const float BEFORE_RAMP_X = 30.6;
+const float BEFORE_RAMP_Y = 20.1;
+const float BEFORE_RAMP_HEADING = 90;
+
+const float CRANK_X = 30.7;
+const float CRANK_Y = 54.5;
+const float CRANK_HEADING = 87;
+
+const float SALT_X = 26.2;
+const float SALT_Y = 11.1;
+const float SALT_HEADING = 134.;
+
+const float BUTTONS_X = 16.4;
+const float BUTTONS_Y = 64.5;
+const float BUTTONS_HEADING = 130;
+
+const float GARAGE_X = 6.1;
+const float GARAGE_Y = 57.8;
+const float GARAGE_HEADING = 310;
+
+const float SWITCH_X = 10.6;
+const float SWITCH_Y = 15.4;
+const float SWITCH_HEADING = 86;
 
 const int percent = 60; //sets the motor percent for the rest of the code
 const int toSlow = 15; //this int will be the fix required for the robot to travel among the course
 const float cts_per_in= 3.704; //counts per inch
 const float cts_per_deg = .1859; //counts per degree
+
+const int startDegree = 82;
+const int downDegree = 174;
 
 //declares prototypes for functions
 float goToCrank();
@@ -338,6 +355,7 @@ void turnCrank(float cds_value){
     if (cds_value > .3){ //the light is blue
 
         for (int i=0; i<3; i++){
+            check_heading(CRANK_HEADING);
             servo.SetDegree(120);
             Sleep(1200);
             move(percent, cts_per_in); //move forward an inch
@@ -351,6 +369,7 @@ void turnCrank(float cds_value){
     } else{ //the light is red
 
         for (int i=0; i<3; i++){
+            check_heading(CRANK_HEADING);
             servo.SetDegree(0);
             Sleep(1200);
             move(percent, cts_per_in); //move forward an inch
@@ -369,15 +388,16 @@ void turnCrank(float cds_value){
  * until it is deposited in the garage.
  */
 void getSalt(){
-    servoSalt.SetDegree(172);
+    servoSalt.SetDegree(downDegree);
+    Sleep(1000);
 } //getSalt
 
 /*
  * This method will deposit the salt into the garage.
  */
 void depositSalt(){
-    servoSalt.SetDegree(0);
-    move(-(percent-toSlow), cts_per_in*1); //back up and push salt into garage
+    servoSalt.SetDegree(startDegree);
+    move(-(percent-toSlow), cts_per_in*3); //back up and push salt into garage
 } //depositSalt
 
 /*
@@ -388,10 +408,10 @@ void depositSalt(){
  */
 void toggleSwitch(){
     check_heading(270);
-    if (RPS.OilDirec()==0){
+    if (RPS.OilDirec()==0)/*Switch needs to be toggled to the left*/{
         servoSalt.SetDegree(140);
         move(percent, cts_per_in*5);
-    } else{
+    } else /*Switch needs to be toggled to the right*/{
         servoSalt.SetDegree(140);
         move(percent, cts_per_in*5);
     }
@@ -405,9 +425,10 @@ void toggleSwitch(){
 void goToSalt(){
     move(-percent, cts_per_in*12);
     turn_left(percent-toSlow, cts_per_deg*45); //angle robot towards salt
-    move(-percent, cts_per_in*2); //move to the salt
+    move(-percent, cts_per_in*10); //move to the salt
     //check x and y
-    check_heading(135);
+    check_heading(SALT_HEADING);
+    Sleep(1000);
 } //goToSalt
 
 /*
@@ -416,9 +437,16 @@ void goToSalt(){
  *      the robot will be at the salt bag
  */
 float goToCrank(){
-    turn_right(percent-toSlow, cts_per_deg*45);
-    check_heading(90);
+    turn_right(percent-toSlow, cts_per_deg*90);
+    move(percent, cts_per_in*2);
+    turn_left(percent-toSlow, cts_per_deg*45);
+    //check x
+    //check y
+    check_heading(BEFORE_RAMP_HEADING);
     move(percent, cts_per_in*46);
+    //check x
+    //check y
+    check_heading(CRANK_HEADING);
     return CdS.Value();
 } //goToCrank
 
@@ -428,9 +456,11 @@ float goToCrank(){
  *      the robot will be at the crank
  */
 void goToButtons(){
-    turn_left(percent-toSlow, cts_per_deg*45);
-    check_heading(135);
-    move(percent, cts_per_in*11);
+    servoSalt.SetDegree(startDegree);
+    turn_left(percent-toSlow, cts_per_deg*90);
+    move(percent, cts_per_in*3);
+    turn_left(percent-toSlow, cts_per_deg*90);
+    check_heading(BUTTONS_HEADING);
 } //goToButtons
 
 /*
@@ -441,10 +471,10 @@ void goToButtons(){
  *      the robot will be at the buttons
  */
 void goToGarage(){
-    turn_left(percent-toSlow, cts_per_deg*90);
+    turn_right(percent-toSlow, cts_per_deg*90);
     move(-percent, cts_per_in*2);
-    turn_right(percent - toSlow, cts_per_deg*90);
-    check_heading(315);
+    turn_right(percent - toSlow, cts_per_deg*45);
+    check_heading(GARAGE_HEADING);
 } //goToGarage
 
 /*
@@ -533,11 +563,11 @@ int main(void)
             light = goToCrank();
             turnCrank(light);
             break;
-        case 2:
+        case 3:
             goToButtons();
             pushButtons();
             break;
-        case 3:
+        case 2:
             goToGarage();
             depositSalt();
         case 4:
