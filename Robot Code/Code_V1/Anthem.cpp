@@ -1,51 +1,70 @@
-#include <string>
+#include <FEHLCD.h>
+#include <FEHIO.h>
+#include <FEHUtility.h>
+
 
 ///////////////////////////////////////////
 //    NATIONAL ANTHEM GLOBAL VARIABLE
-      long _GLOBAL_START;	// = TimeNowMSec() after RPS Initialization`
-                                          //
+      long _GLOBAL_START;	// = TimeNowMSec() after RPS Initialization
+      char freedom[20][50]{
+        "ERROR LINE",
+        "Oh say can you see",
+        "By the dawn's early light",
+        "What so proudly we hailed",
+        "at the twighlight's last gleaming",
+        "Whose broad stripes and bright starts",
+        "Through the perilous fight",
+        "O'er the ramparts we watched",
+        "Were so gallantly streaming?",
+        "And the rockets' red glare",
+        "The bombs bursting in air",
+        "Gave proof through the night",
+        "That our flag was still there",
+        "Oh Say does that Star Spangled",
+        "Banner yet wave",
+        "O'er the land of the free",
+        "And the HOME",
+        "OF.",
+        "THE.",
+        "BRAVE!!"
+      };//line
+                                         //
 ///////////////////////////////////////////
 
 
 ///////////////////////////////////////////
 //    NATIONAL ANTHEM METHOD HEADS
-      int beatAtLine(int);
-      int lineAtBeat(int);
-      int sincestartMSec();
-      int beatNow();
-      void AnthemDisplay(int);
-      void recallPatriotism(int);
-                                          //
+    int beatAtLine(int);
+    int lineAtBeat(int);
+    int sincestartMSec();
+    int beatNow();
+    void AnthemDisplay(int);
+    void recallPatriotism(int);
+                                         //
 ///////////////////////////////////////////
 
 
-///////////////////////////////////////////
-//    GLOBAL VARABLE DEFINITIONS
-  long _GLOBAL_START; // = TimeNowMSec() after RPS Initialization
-  const string freedom[20]{
-    "ERROR LINE",
-    "Oh say can you see",
-    "By the dawn's early light",
-    "What so proudly we hailed",
-    "at the twighlight's last gleaming",
-    "Whose broad stripes and bright starts",
-    "Through the perious fight",
-    "O'er the ramparts we watched",
-    "Were so gallantly streaming?",
-    "And the rockets' red glare",
-    "The bombs bursting in air",
-    "Gave proof through the night",
-    "That our flag was still there",
-    "Oh Say does that Star Spangled",
-    "Banner yet wave",
-    "O'er the land of the free",
-    "And the HOME",
-    "OF.",
-    "THE.",
-    "BRAVE!!"
-  }//line
-                                          //
-///////////////////////////////////////////
+int main(void)
+{
+    ButtonBoard buttons( FEHIO::Bank3 );
+
+    LCD.Clear( FEHLCD::Black );
+    LCD.SetFontColor( FEHLCD::White );
+
+    while( true )
+    {
+        if( buttons.MiddlePressed() )
+        {
+            LCD.WriteLine( "Hello World!" );
+            Sleep( 1000 );
+            _GLOBAL_START = TimeNowMSec();
+            LCD.Clear( FEHLCD::Black );
+            recallPatriotism(60000);
+        }
+    }
+    return 0;
+}
+
 
 
 ///////////////////////////////////////////
@@ -56,7 +75,7 @@
     else
       return(-3);		//Return error line if something goes wrong
   }//beatAtLine
-  
+
   int lineAtBeat(int beat){
     if(beat > 111)	//If after the last beat, assume it is last line to avoid index error
       return(19);
@@ -65,24 +84,24 @@
     else
       return((beat + 3) / 6);
   }//lineAtBeat
-  
-  
+
+
   //gets millisecs since beginning time
   int sincestartMSec(){
       return((int)(TimeNowMSec() - _GLOBAL_START));
   }
-  
+
   //Gives the current beat based on time since beginning
   int beatNow(){
       return(sincestartMSec()/560);
   }//beatNow
-  
-  
+
+
   void AnthemDisplay(int line){	//Displays the given line to the Proteus in the correct spot
-    LCD.WriteAt(0,0,freedom[line]);
+    LCD.WriteLine(freedom[line]);\
   }
-  
-  
+
+
   //Acts like the Sleep(int) function, but better, because AMERICA NEVER WOULD NEVER JUST SIT THERE.
   //Param: (int) duration --> the duration (in milliseconds) to be standing by in great anticipation
   //  for not only the next operation of our apparatus of freedom (robot), but also the next incantation to
@@ -93,8 +112,8 @@
     //  of this function call, then you can bet there will be singing.
     long end_time = TimeNowMSec() + duration;
     int base_beat = beatNow();
-    int base_lines = linesAtBeat(base_beat);
-  
+    int base_lines = lineAtBeat(base_beat);
+
     if(lineAtBeat(base_beat + duration / 560) == lineAtBeat(base_beat)){		//If the line at the end of the pause is the same as it is now, line won't be changed, so just sleep like normal
       Sleep(duration);
     }//if
@@ -103,16 +122,16 @@
       Sleep(duration % 35);					//Sleeps the remainder time if the sleep isn't a multiple of the 35 ms beat
       while( TimeNowMSec() < end_time ){				//loop until sleep is over
         if(lineAtBeat(beatNow()) > base_lines + lines_passed){	//If the new line has come
-      	  lines_passed++;
+          lines_passed++;
           AnthemDisplay(base_lines + lines_passed);
         }//end if
-        Sleep(35);						//Sleep the beat length, so as to not wear down the battery as much				
+        Sleep(35);						//Sleep the beat length, so as to not wear down the battery as much
       }//end while
     }//end else
 
   }
 
-                                          //
+                                         //
 ///////////////////////////////////////////
 
 
@@ -140,3 +159,4 @@
   111		//BRAVE!!
 }//Actually, represents te formula 6i-3
 */
+
