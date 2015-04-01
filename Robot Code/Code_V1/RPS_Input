@@ -1,0 +1,155 @@
+#include <FEHLCD.h>
+#include <FEHIO.h>
+#include <FEHUtility.h>
+#include <FEHRPS.h>
+#include <FEHBattery.h>
+
+int main(void)
+{
+    ButtonBoard buttons( FEHIO::Bank3 );
+    LCD.SetOrientation(FEHLCD::East);
+    LCD.Clear( FEHLCD::Black );
+    LCD.SetFontColor( FEHLCD::White );
+
+    float START_LIGHT_X = 18;
+    float START_LIGHT_Y = 30;
+    float START_LIGHT_HEADING = 30;
+    float CRANK_X = 28.8;
+    float CRANK_Y = 58.3;
+    float CRANK_HEADING = 30;
+    float SALT_X = 27.9;
+    float SALT_Y = 8.4;
+    float SALT_HEADING = 30;
+    float BUTTONS_X = 15.099;
+    float BUTTONS_Y = 64.099;
+    float BUTTONS_HEADING = 30;
+    float GARAGE_X = 6.4;
+    float GARAGE_Y = 59.099;
+    float GARAGE_HEADING = 30;
+    float SWITCH_X = 13.669;
+    float SWITCH_Y = 9.9;
+    float SWITCH_HEADING = 30;
+    int menu = 1;
+    int run = 1;
+
+    RPS.InitializeMenu();
+    while( run == 1 )
+    {
+        if  (buttons.LeftPressed())
+            {
+            menu--;
+            }
+        else if (buttons.RightPressed())
+            {
+                menu++;
+            }
+
+        switch (menu)
+        {
+        case 0:
+            menu = 7;
+            break;
+        case 1:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Salt Bag" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                SALT_X = RPS.X();
+                SALT_Y = RPS.Y();
+                LCD.WriteLine( "Location Recorded" );
+                Sleep(1000);
+            }//Press Middle Button
+            break;
+        case 2:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Crank" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                CRANK_X = RPS.X();
+                CRANK_Y = RPS.Y();
+                LCD.WriteLine( "Location Recorded" );
+                Sleep(1000);
+            }//Press Middle Button
+            break;
+        case 3:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Buttons" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                BUTTONS_X = RPS.X();
+                BUTTONS_Y = RPS.Y();
+                LCD.WriteLine( "Location Recorded" );
+                Sleep(1000);
+            }//Press Middle Button
+            break;
+        case 4:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Garage" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                GARAGE_X = RPS.X();
+                GARAGE_Y = RPS.Y();
+                LCD.WriteLine( "Location Recorded" );
+                Sleep(1000);
+            }//Press Middle Button
+            break;
+        case 5:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Oil Pump" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                SWITCH_X = RPS.X();
+                SWITCH_Y = RPS.Y();
+                LCD.WriteLine( "Location Recorded" );
+                Sleep(1000);
+            }//Press Middle Button
+            break;
+        case 6:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Starting Location" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                START_LIGHT_X = RPS.X();
+                START_LIGHT_Y = RPS.Y();
+                LCD.WriteLine( "Location Recorded" );
+                Sleep(1000);
+            }//Press Middle Button
+            break;
+        case 7:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine("Press Middle Button to End.");
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                run = 0;
+            }
+            break;
+        case 8:
+            menu=1;
+            break;
+
+         }//Switch Case
+
+    }// Menu
+
+    LCD.Clear( FEHLCD::Black );
+    LCD.WriteAt( "Location",0,0);      LCD.WriteAt("X/Y",130,0);
+    LCD.WriteAt("Salt Bag ",0,20);     LCD.WriteAt(SALT_X,120,20);
+                                       LCD.WriteAt(SALT_Y,120,40);
+    LCD.WriteAt("Crank",0,60);         LCD.WriteAt(CRANK_X,120,60);
+                                       LCD.WriteAt(CRANK_Y,120,80);
+    LCD.WriteAt("Buttons",0,100);      LCD.WriteAt(BUTTONS_X,120,100);
+                                       LCD.WriteAt(BUTTONS_Y,120,120);
+    LCD.WriteAt("Garage",0,140);       LCD.WriteAt(GARAGE_X,120,140);
+                                       LCD.WriteAt(GARAGE_Y,120,160);
+    LCD.WriteAt("Start",0,180);        LCD.WriteAt(START_LIGHT_X,120,180);
+                                       LCD.WriteAt(START_LIGHT_Y,120,200);
+    return 0;
+}
+
