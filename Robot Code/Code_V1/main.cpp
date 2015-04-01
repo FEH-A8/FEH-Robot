@@ -628,7 +628,8 @@ class Boundary {
     float getSlope();
     void setTail(coordinate);
     void setHead(coordinate);
-    float length();			//finds the distance between the head and the tail
+    float length();		        //finds the distance between the head and the tail
+    float getAngle();
     int compareto_bound(coordinate); 	//returns -1 if < line, 1 if > line, 0 if on line
     int compareto_slab(coordinate, float); 		//"slab" is a boundary line extending in the positive direction with spacing, width. Returns -1 if < both lines, 1 if > both lines, 0 if on or between lines
     bool intersection(Boundary *);
@@ -650,7 +651,7 @@ coordinate * Boundary::getTail(){
 coordinate * Boundary::getHead(){
   return (head);
 }
-float getSlope(){
+float Boundary::getSlope(){
   return(this.slope);
 }
 void Boundary::setTail(coordinate T){
@@ -658,6 +659,9 @@ void Boundary::setTail(coordinate T){
 }
 void Boundary::setHead(coordinate H){
   *head = H;
+}
+float Boundary::getAngle(){
+  return(atan(1/slope) * 180. / 3.14159);
 }
 float Boundary::length(){
   return(sqrt(pow(x_comp,2) + pow(y_comp,2)));
@@ -765,7 +769,7 @@ class RPSChecker{
     void check_any(float[]);		//param is end state array
     float check_distance(float, float);
 
-} Checker;
+};
 
 
 
@@ -936,7 +940,7 @@ void RPSChecker::check_heading(float heading){
         right_motor.SetPercent(0);
         left_motor.SetPercent(0);
     } //check_heading
-// ///////////////////////////////////
+// ////////////////////////////////
 
 
 void RPSChecker::check_any(float destination[]){
@@ -947,6 +951,37 @@ void RPSChecker::check_any(float destination[]){
   coordinate start(RPS.X(), RPS.Y());
   coordinate end(destination[0], destination[1]);
   Boundary path(start, end);
+  
+  //turn to appropriate angle
+  float to_heading = path.getAngle();
+  check_heading(to_heading);
+
+  //Stolen from check_x and check_y functions
+  float closeness;
+  int pos_neg_multiplier;
+
+  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
+    closeness = (check_distance(destination[0], destination[1]));
+    pos_neg_multiplier = (((int)(closeness < 0)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
+
+    closeness = abs(closeness);
+    //strong pulse motor if farther away
+    if( closeness > 2){
+      right_motor.SetPercent(65 * pos_neg_multiplier);
+      left_motor.SetPercent(65 * pos_neg_multiplier);
+    }
+    else{
+      right_motor.SetPercent(45 * pos_neg_multiplier);
+      left_motor.SetPercent(45 * pos_neg_multiplier);
+    }
+  } while (closeness > .25);
+  right_motor.SetPercent(0);
+  left_motor.SetPercent(0);
+
+  check_heading(destination[2]);
+
+  
+            
    
 }
 
@@ -955,4 +990,4 @@ float RPSChecker::check_distance(float x, float y){
 }
 
 
-///////////////////////////////////////
+//////////////////////////////////////
