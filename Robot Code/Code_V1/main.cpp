@@ -568,8 +568,10 @@ int main(void)
     left_encoder.SetThresholds(.5, 2);
 
     float light;
+    double currentTime = TimeNow();
+    double startTimeout = 32.;
 
-    while(CdS.Value()> .6); //start on the light
+    while(CdS.Value()> .6 || TimeNow()-currentTime > startTimeout); //start on the light
 
     for (int i=0; i<arrayLength; i++){
         switch (taskArray[i]){
