@@ -76,32 +76,43 @@ RPSChecker garmin;
 
 //declares RPS location constants for key locations
 //Course D was used for these values
-const float START_LIGHT_X = 18.7;
-const float START_LIGHT_Y = 28.2;
+float START_LIGHT_X = 18;
+float START_LIGHT_Y = 30;
+float START_LIGHT_HEADING = 30;
 
-const float BEFORE_RAMP_X = 30.6;
-const float BEFORE_RAMP_Y = 20.1;
-const float BEFORE_RAMP_HEADING = 92;
+float SALT_X = 27.9;
+float SALT_Y = 8.4;
+float SALT_HEADING = 30;
 
-const float CRANK_X = 30.7;
-const float CRANK_Y = 54.5;
-const float CRANK_HEADING = 92;
+float BEFORE_RAMP_X = 30.6;
+float BEFORE_RAMP_Y = 20.1;
+float BEFORE_RAMP_HEADING = 92;
 
-const float SALT_X = 26.2;
-const float SALT_Y = 11.1;
-const float SALT_HEADING = 134.;
+float CRANK_X = 28.8;
+float CRANK_Y = 58.3;
+float CRANK_HEADING = 30;
 
-const float BUTTONS_X = 16.4;
-const float BUTTONS_Y = 64.5;
-const float BUTTONS_HEADING = 130;
+float BUTTONS_X = 15.099;
+float BUTTONS_Y = 64.099;
+float BUTTONS_HEADING = 30;
 
-const float GARAGE_X = 6.1;
-const float GARAGE_Y = 57.8;
-const float GARAGE_HEADING = 310;
+float GARAGE_X = 6.4;
+float GARAGE_Y = 59.099;
+float GARAGE_HEADING = 30;
 
-const float SWITCH_X = 10.6;
-const float SWITCH_Y = 15.4;
-const float SWITCH_HEADING = 86;
+float ABOVE_AVALANCHE_X = 6;
+float ABOVE_AVALANCHE_Y = 40;
+float ABOVE_AVALANCHE_HEADING = 180;
+
+float SWITCH_X = 13.669;
+float SWITCH_Y = 9.9;
+float SWITCH_HEADING = 30;
+
+float NORTH = 90;
+float EAST  = 0;
+float SOUTH = 180;
+float WEST  = 270;
+
 
 const int percent = 60; //sets the motor percent for the rest of the code
 const int toSlow = 15; //this int will be the fix required for the robot to travel among the course
@@ -112,7 +123,8 @@ const int START_DEGREE = 82;
 const int DOWN_DEGREE = 174;
 
 //declares prototypes for functions
-float goToCrank();
+void Record_RPS();
+void goToCrank();
 void goToButtons();
 void goToSalt();
 void goToGarage();
@@ -511,7 +523,7 @@ void goToSalt(){
     move(-percent, cts_per_in*10);
     turn_left(percent-toSlow, cts_per_deg*45); //angle robot towards salt
     garmin.check_heading(133);
-    move(-percent, cts_per_in*9); //move to the salt    THIS VALUE IS LOWER NOW
+    move(-percent, cts_per_in*9); //move to the salt    
 
     garmin.check_any_minus(26.1, 11.3, 132);
     Sleep(1000);
@@ -522,19 +534,18 @@ void goToSalt(){
  * @pre
  *      the robot will be at the salt bag
  */
-float goToCrank(){
+void goToCrank(){
     move(percent, cts_per_in*2);
     turn_right(percent-toSlow, cts_per_deg*90);
     move(percent, cts_per_in*10);
     turn_left(percent-toSlow, cts_per_deg*45);
 
     garmin.check_any_plus(BEFORE_RAMP_X, BEFORE_RAMP_Y, BEFORE_RAMP_HEADING);
-    move(percent, cts_per_in*38);   //DIFFERENT VALUE
+    move(percent, cts_per_in*38);  
     //check x
     //check y
     garmin.check_y_plus(CRANK_Y);
     garmin.check_heading(CRANK_HEADING);
-    return CdS.Value();
 } //goToCrank
 
 /*
@@ -580,6 +591,222 @@ void goToSwitch(){
     move(percent, cts_per_in*4);
 } //goToSwitch
 
+void Record_RPS()
+{
+    int menu = 1;
+    int run = 1;
+
+    while( run == 1 )
+    {
+        if  (buttons.LeftPressed())
+            {
+            menu--;
+            }
+        else if (buttons.RightPressed())
+            {
+                menu++;
+            }
+
+        switch (menu)
+        {
+        case 0:
+            menu = 13;
+            break;
+        case 1:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Salt Bag" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                SALT_X = RPS.X();
+                SALT_Y = RPS.Y();
+                SALT_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(SALT_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(SALT_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(SALT_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 3:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Crank" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                CRANK_X = RPS.X();
+                CRANK_Y = RPS.Y();
+                CRANK_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(CRANK_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(CRANK_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(CRANK_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 2:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Before Ramp" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                BEFORE_RAMP_X = RPS.X();
+                BEFORE_RAMP_Y = RPS.Y();
+                BEFORE_RAMP_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(BEFORE_RAMP_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(BEFORE_RAMP_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(BEFORE_RAMP_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 4:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Buttons" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                BUTTONS_X = RPS.X();
+                BUTTONS_Y = RPS.Y();
+                BUTTONS_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(BUTTONS_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(BUTTONS_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(BUTTONS_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 5:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Garage" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                GARAGE_X = RPS.X();
+                GARAGE_Y = RPS.Y();
+                GARAGE_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(GARAGE_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(GARAGE_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(GARAGE_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 6:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Oil Pump" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                SWITCH_X = RPS.X();
+                SWITCH_Y = RPS.Y();
+                SWITCH_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(SWITCH_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(SWITCH_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(SWITCH_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 7:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Starting Location" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                START_LIGHT_X = RPS.X();
+                START_LIGHT_Y = RPS.Y();
+                START_LIGHT_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(START_LIGHT_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(START_LIGHT_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(START_LIGHT_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+
+        case 8:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Starting Location" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                ABOVE_AVALANCHE_X = RPS.X();
+                ABOVE_AVALANCHE_Y = RPS.Y();
+                ABOVE_AVALANCHE_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(ABOVE_AVALANCHE_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(ABOVE_AVALANCHE_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(ABOVE_AVALANCHE_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 9:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "North" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                NORTH = RPS.Heading();
+                LCD.Write( "Heading = ");  LCD.WriteLine(NORTH);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 10:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "East" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                EAST = RPS.Heading();
+                LCD.Write( "Heading = ");  LCD.WriteLine(EAST);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 11:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "South" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                SOUTH = RPS.Heading();
+                LCD.Write( "Heading = ");  LCD.WriteLine(SOUTH);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 12:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "West" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                WEST = RPS.Heading();
+                LCD.Write( "Heading = ");  LCD.WriteLine(WEST);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 13:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine("Press Middle Button to End.");
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                run = 0;
+                LCD.Clear( FEHLCD::Black );
+            }
+            break;
+        case 14:
+            menu=1;
+            break;
+
+         }//Switch Case
+    }// Menu Loop
+}//Record_RPS
+
 
 /*
  * The main method
@@ -592,42 +819,39 @@ int main(void)
        servo.SetMin(500);
        servo.SetMax(2266);
 
-    LCD.SetOrientation(FEHLCD::East);                //NEW STUFF
     //initialize positions of servo motors
+
     servoSalt.SetDegree(82);
-    servo.SetDegree(0);
-    LCD.Clear( FEHLCD::Black );
-    LCD.SetFontColor( FEHLCD::White );
-    LCD.Write("The current battery power is ");
-    LCD.Write(100*Battery.Voltage()/11.7);
-    LCD.Write("%.");
-    Sleep(2000);
-
-    LCD.Clear( FEHLCD::Black );
-    LCD.SetFontColor( FEHLCD::White );
-
-    const int arrayLength = 5   ; //sets length of task array
-
-    /*
-     * Initialize task array.
-     * Elements of which are to be used in switch case in main.
-     */
-    int taskArray[arrayLength] = {0, 1, 3, 2, 4};
-
-    //initialize positions of servo motors
-    servoSalt.SetDegree(82);
-    servo.SetDegree(0);
+    servo.SetDegree(90);
 
     //initialize encoder thresholds
     right_encoder.SetThresholds(.5, 2);
     left_encoder.SetThresholds(.5, 2);
 
+    //Print the current battery state to the screen
+    LCD.SetOrientation(FEHLCD::East);
+    LCD.Clear( FEHLCD::Black );
+    LCD.SetFontColor( FEHLCD::White );
+    LCD.Write("The current battery power is "); LCD.Write(100*Battery.Voltage()/11.7); LCD.Write("%.");
+    Sleep(1000);
+    LCD.Clear( FEHLCD::Black );
+    LCD.SetFontColor( FEHLCD::White );
 
+   //Initialize RPS
     RPS.InitializeMenu();
-    LCD.WriteLine(garmin.check_distance(0,0));
+
+   //Read In RPS Values
+    Record_RPS();
+
+    /*
+     * Initialize task array.
+     * Elements of which are to be used in switch case in main.
+     */
+
+    const int arrayLength = 5   ; //sets length of task array
+    int taskArray[arrayLength] = {0, 1, 3, 2, 4};
 
 
-    float light;
     double currentTime = TimeNow();
     double startTimeout = 32.;
 
@@ -640,7 +864,7 @@ int main(void)
             getSalt();
             break;
         case 1:
-            light = goToCrank();
+            goToCrank();
             turnCrank();
             break;
         case 2:
@@ -658,7 +882,6 @@ int main(void)
 
     return 0;
 } //main
-
 
 
 //////////////////////////////////////
