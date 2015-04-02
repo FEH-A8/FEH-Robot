@@ -113,7 +113,6 @@ float EAST  = 0;
 float SOUTH = 180;
 float WEST  = 270;
 
-
 const int percent = 60; //sets the motor percent for the rest of the code
 const int toSlow = 15; //this int will be the fix required for the robot to travel among the course
 const float cts_per_in= 3.704; //counts per inch
@@ -123,7 +122,6 @@ const int START_DEGREE = 82;
 const int DOWN_DEGREE = 174;
 
 //declares prototypes for functions
-void Record_RPS();
 void goToCrank();
 void goToButtons();
 void goToSalt();
@@ -143,6 +141,375 @@ void move_adjusted(int percent, int counts);
 void brake(int percent);
 void turn_left(int percent, int counts);
 void turn_right(int percent, int counts);
+
+void Record_RPS();
+
+//////////////////////////////////////
+
+/* Boundary Member Methods */
+Boundary::Boundary(coordinate first, coordinate second){
+  tail = first;
+  head = second;
+  x_comp = (head.x - tail.x);
+  y_comp = (head.y - tail.y);
+  slope = y_comp / x_comp;
+}
+
+Boundary::~Boundary(){
+    //delete tail;
+    //delete head;
+}
+
+coordinate * Boundary::getTail(){
+  return (&tail);
+}
+coordinate * Boundary::getHead(){
+  return (&head);
+}
+float Boundary::getSlope(){
+  return(slope);
+}
+void Boundary::setTail(coordinate T){
+  tail = T;
+}
+void Boundary::setHead(coordinate H){
+  head = H;
+}
+float Boundary::getAngle(){
+  return(atan(1/slope) * 180. / 3.14159);
+}
+float Boundary::length(){
+  return(sqrt(pow(x_comp,2) + pow(y_comp,2)));
+}
+int Boundary::compareto_bound(coordinate pt){
+
+  if (pt.y == (slope * pt.x) + tail.y){ 	//if y = mx + b, the point is on the boundary line
+    return(0);
+  }
+  else if (pt.y > (slope * pt.x) + tail.y){	//if the slope is too small, i.e. the coordinate is past the line
+    return(1);
+  }
+  else if (pt.y < (slope * pt.x) + tail.y){	//if the slope is too big, i.e. the coordinate falls before the line
+    return(-1);
+  }
+  else{						//If you get here, something done went stupid
+    return(0);
+  }
+
+}
+
+
+int Boundary::compareto_slab(coordinate pt, float width){
+  //calculate tail point of second boundary line
+  //Derivation in side notes
+  float m = -1 / slope;
+  float x_prime = width/(pow((1 + m * m), .5));
+  float y_prime = m * x_prime + pt.y;
+  x_prime += pt.x;
+
+  coordinate second_tail(x_prime, y_prime);
+
+  //if compare to bound on both lines is negative 1, the point lies between them.
+  //if it is positive 1, it could be above or below.
+  //It can never be zero...nevermind, i cant do that
+  //i'll just copy most of the code from compareto_bound()
+
+  if (pt.y >= (slope * pt.x) + tail.y && pt.y <= (slope * pt.x) + second_tail.y){ 	//if y = mx + b, the point is on the boundary line
+    return(0);
+  }
+  else if (pt.y > (slope * pt.x) + second_tail.y){	//if the slope is too small, i.e. the coordinate is past the line
+    return(1);
+  }
+  else if (pt.y < (slope * pt.x) + tail.y){	//if the slope is too big, i.e. the coordinate falls before the line
+    return(-1);
+  }
+  else{						//Something done went stupid
+    return(0);
+  }
+}
+
+bool Boundary::intersection(Boundary * crossing){
+  //Check if the crossing points lie on either sides of the reference line
+  //  if slope of reference line is > 0
+  //  	check if top crossing point
+  //Dang this method is hard
+  //Nvm I got it
+  //if the crossing points lie on either side of the reference line, and the reference line points lie on either side of the crossing line, they intersect
+  //  to check if the points lie on either side of the line, see if the product of their point compareto's is -1, (1 * -1)
+
+
+  if (compareto_bound(*((*crossing).getHead())) * compareto_bound(*((*crossing).getTail())) == -1 && (*crossing).compareto_bound(*(getHead())) * (*crossing).compareto_bound(*(getTail())) == -1){
+    return(true);
+  }
+  else{
+    return(false);
+  }
+}
+
+/* Checker class member functions */
+RPSChecker::RPSChecker(){
+  //Initialize RPS values at start
+  begin_X = RPS.X();
+  begin_Y = RPS.Y();
+  begin_Heading = RPS.Heading();
+}
+
+void RPSChecker::check_x_plus(float end_x){
+  //Makes robot travel along x axis
+
+  float closeness;
+  int pos_neg_multiplier;
+
+  //Turn toward positive x axis
+  float start_heading = RPS.Heading();
+  check_heading(0);
+
+  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
+    closeness = (RPS.X() - end_x);
+    pos_neg_multiplier = ((closeness < 0) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
+
+    closeness = abs(closeness);
+    //strong pulse motor if farther away
+    if( closeness > 2){
+      right_motor.SetPercent(65 * pos_neg_multiplier);
+      left_motor.SetPercent(65 * pos_neg_multiplier);
+    }
+    else{
+      right_motor.SetPercent(45 * pos_neg_multiplier);
+      left_motor.SetPercent(45 * pos_neg_multiplier);
+    }
+  } while (closeness > .25);
+  right_motor.SetPercent(0);
+  left_motor.SetPercent(0);
+
+  check_heading(start_heading);
+}
+
+
+void RPSChecker::check_x_minus(float end_x){
+  //Taken from lab 2
+  //Assumes that robot is aligned so it travels forward along negative X axis
+
+  float closeness;
+  int pos_neg_multiplier;
+
+  //Turn toward positive x axis
+  float start_heading = RPS.Heading();
+  check_heading(180);
+
+  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
+    closeness = (end_x - RPS.X());
+    pos_neg_multiplier = ((closeness < 0) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
+
+    closeness = abs(closeness);
+    //strong pulse motor if farther away
+    if( closeness > 2){
+      right_motor.SetPercent(65 * pos_neg_multiplier);
+      left_motor.SetPercent(65 * pos_neg_multiplier);
+    }
+    else{
+      right_motor.SetPercent(45 * pos_neg_multiplier);
+      left_motor.SetPercent(45 * pos_neg_multiplier);
+    }
+  } while (closeness > .25);
+  right_motor.SetPercent(0);
+  left_motor.SetPercent(0);
+
+  check_heading(start_heading);
+}
+
+void RPSChecker::check_y_plus(float end_y){
+  //Taken from lab 2
+  //Assumes that robot is aligned so it travels forward along positive Y axis
+  //float state[3] = current_state();
+  float closeness;
+  int pos_neg_multiplier;
+
+  //Turn toward positive y axis
+  float start_heading = RPS.Heading();
+  check_heading(90);
+
+  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
+    closeness = (RPS.Y() - end_y);
+    pos_neg_multiplier = (((int)(closeness < 0)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
+
+    closeness = abs(closeness);
+    //strong pulse motor if farther away
+    if( closeness > 2){
+      right_motor.SetPercent(65 * pos_neg_multiplier);
+      left_motor.SetPercent(65 * pos_neg_multiplier);
+    }
+    else{
+      right_motor.SetPercent(45 * pos_neg_multiplier);
+      left_motor.SetPercent(45 * pos_neg_multiplier);
+    }
+  } while (closeness > .25);
+  right_motor.SetPercent(0);
+  left_motor.SetPercent(0);
+
+  check_heading(start_heading);
+}
+
+void RPSChecker::check_y_minus(float end_y){
+  //Taken from lab 2
+  //Assumes that robot is aligned so it travels forward along negative Y axis
+  float closeness;
+  int pos_neg_multiplier;
+
+  //Turn toward positive x axis
+  float start_heading = RPS.Heading();
+  check_heading(270);
+
+  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
+    closeness = (end_y - RPS.Y());
+    pos_neg_multiplier = (((int)(closeness < 0)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
+
+    closeness = abs(closeness);
+    //strong pulse motor if farther away
+    if( closeness > 2){
+      right_motor.SetPercent(65 * pos_neg_multiplier);
+      left_motor.SetPercent(65 * pos_neg_multiplier);
+    }
+    else{
+      right_motor.SetPercent(45 * pos_neg_multiplier);
+      left_motor.SetPercent(45 * pos_neg_multiplier);
+    }
+  } while (closeness > .25);
+  right_motor.SetPercent(0);
+  left_motor.SetPercent(0);
+
+  check_heading(start_heading);
+}
+
+void RPSChecker::check_45(float end_x){
+
+
+}
+
+
+// //////////////////////////////
+// Taken from working code, edited to no longer sway around 90 degrees
+void RPSChecker::check_heading(float heading){
+
+    const int turnPercent = 50;
+        float change = (int)(abs(heading-RPS.Heading()));
+        if(change>180){ change = 360-change; }
+        while(change > .7){
+            float curr_Heading = RPS.Heading();
+            if(curr_Heading < heading || (curr_Heading + change) > 360){ //Turn left
+                right_motor.SetPercent(turnPercent);
+                left_motor.SetPercent(-turnPercent);
+            } //if
+            else { //Turn right
+                right_motor.SetPercent(-turnPercent);
+                left_motor.SetPercent(turnPercent);
+            } //else
+            Sleep(30);
+            change = (int)abs(heading-RPS.Heading());
+            if(change>180){
+                change = 360-change;
+            } //if
+        } //while
+        right_motor.SetPercent(0);
+        left_motor.SetPercent(0);
+    } //check_heading
+// ////////////////////////////////
+
+
+void RPSChecker::check_any_plus(float dest_x, float dest_y, float dest_heading){   //PLUS designates that front stays in the front when it moves
+
+  // NOTE: This method turns toward the final coordinate before moving, then the final desired heading at the end so be careful when to use this
+  //       I mean to say that If you are facing up and you want to check a point 2 inches to the left, make sure you have room to swing through quadrant IV
+
+  coordinate start(RPS.X(), RPS.Y());
+  coordinate end(dest_x, dest_y);
+  Boundary path(start, end);
+
+  //turn to appropriate angle
+  float to_heading = path.getAngle();
+  check_heading(to_heading);   //Send salt bag arm side toward heading
+
+  //Modified from check_x and check_y functions
+  float closeness = (check_distance(dest_x, dest_y));
+  float last_closeness = closeness;
+  int pos_neg_multiplier = 1;
+
+  do {
+    closeness = (check_distance(dest_x, dest_y));
+    pos_neg_multiplier = (((int)(closeness > last_closeness)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward (because distance increases if you pass the point)
+
+    last_closeness = closeness;
+
+    //strong pulse motor if farther away
+    if( closeness > 4){
+      right_motor.SetPercent(65 * pos_neg_multiplier);
+      left_motor.SetPercent(65 * pos_neg_multiplier);
+    }
+    else{
+      right_motor.SetPercent(45 * pos_neg_multiplier);
+      left_motor.SetPercent(45 * pos_neg_multiplier);
+    }
+
+  } while (closeness > 1);
+  right_motor.SetPercent(0);
+  left_motor.SetPercent(0);
+
+  check_heading(dest_heading);
+
+}
+
+void RPSChecker::check_any_minus(float dest_x, float dest_y, float dest_heading){   //PLUS designates that front stays in the front when it moves
+
+  // NOTE: This method turns toward the final coordinate before moving, then the final desired heading at the end so be careful when to use this
+  //       I mean to say that If you are facing up and you want to check a point 2 inches to the left, make sure you have room to swing through quadrant IV
+
+  coordinate start(RPS.X(), RPS.Y());
+  coordinate end(dest_x, dest_y);
+  Boundary path(start, end);
+
+  //turn to appropriate angle
+  float to_heading = path.getAngle();
+  if(to_heading >= 180){ to_heading -= 180;} else{ to_heading += 180;}   //flip the heading to the back of the robot while keeping it under 360
+  check_heading(to_heading);   //Send salt bag arm side toward heading
+
+  //Modified from check_x and check_y functions
+  float closeness = (check_distance(dest_x, dest_y));
+  float last_closeness = closeness;
+  int pos_neg_multiplier = 1;
+
+  do {
+    closeness = (check_distance(dest_x, dest_y));
+    pos_neg_multiplier = (((int)(closeness > last_closeness)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward (because distance increases if you pass the point)
+
+    last_closeness = closeness;
+
+    //strong pulse motor if farther away
+    if( closeness > 4){
+      right_motor.SetPercent(-65 * pos_neg_multiplier);
+      left_motor.SetPercent(-65 * pos_neg_multiplier);
+    }
+    else{
+      right_motor.SetPercent(-45 * pos_neg_multiplier);
+      left_motor.SetPercent(-45 * pos_neg_multiplier);
+    }
+
+  } while (closeness > 1);
+  right_motor.SetPercent(0);
+  left_motor.SetPercent(0);
+
+  check_heading(dest_heading);
+
+}
+
+float RPSChecker::check_distance(float x, float y){
+  coordinate tail(RPS.X(), RPS.Y());
+  coordinate head(x,y);
+  Boundary line(tail, head);
+  return (line.length());
+}
+
+//////////////////////////////////////
+
 
 
 void move(int percent, int counts) //using encoders
@@ -522,10 +889,12 @@ void toggleSwitch(){
 void goToSalt(){
     move(-percent, cts_per_in*10);
     turn_left(percent-toSlow, cts_per_deg*45); //angle robot towards salt
-    garmin.check_heading(133);
-    move(-percent, cts_per_in*9); //move to the salt    
-
-    garmin.check_any_minus(26.1, 11.3, 132);
+    garmin.check_heading(SALT_HEADING);
+    move(-percent, cts_per_in*9); //move to the salt    THIS VALUE IS LOWER NOW
+    garmin.check_x_minus(SALT_X);
+    garmin.check_y_plus(SALT_Y);
+    garmin.check_heading(SALT_HEADING);
+    //garmin.check_any_minus(26.1, 11.3, 132);
     Sleep(1000);
 } //goToSalt
 
@@ -540,10 +909,13 @@ void goToCrank(){
     move(percent, cts_per_in*10);
     turn_left(percent-toSlow, cts_per_deg*45);
 
-    garmin.check_any_plus(BEFORE_RAMP_X, BEFORE_RAMP_Y, BEFORE_RAMP_HEADING);
-    move(percent, cts_per_in*38);  
-    //check x
-    //check y
+    garmin.check_x_plus(BEFORE_RAMP_X);
+    garmin.check_y_plus(BEFORE_RAMP_Y);
+    garmin.check_heading(BEFORE_RAMP_HEADING);
+    //garmin.check_any_plus(BEFORE_RAMP_X, BEFORE_RAMP_Y, BEFORE_RAMP_HEADING);
+
+    move(percent, cts_per_in*38);   //DIFFERENT VALUE
+    garmin.check_x_plus(CRANK_X);
     garmin.check_y_plus(CRANK_Y);
     garmin.check_heading(CRANK_HEADING);
 } //goToCrank
@@ -882,377 +1254,3 @@ int main(void)
 
     return 0;
 } //main
-
-
-//////////////////////////////////////
-
-
-/* Boundary Member Methods */
-Boundary::Boundary(coordinate first, coordinate second){
-  tail = first;
-  head = second;
-  x_comp = (head.x - tail.x);
-  y_comp = (head.y - tail.y);
-  slope = y_comp / x_comp;
-}
-
-Boundary::~Boundary(){
-    //delete tail;
-    //delete head;
-}
-
-coordinate * Boundary::getTail(){
-  return (&tail);
-}
-coordinate * Boundary::getHead(){
-  return (&head);
-}
-float Boundary::getSlope(){
-  return(slope);
-}
-void Boundary::setTail(coordinate T){
-  tail = T;
-}
-void Boundary::setHead(coordinate H){
-  head = H;
-}
-float Boundary::getAngle(){
-  return(atan(1/slope) * 180. / 3.14159);
-}
-float Boundary::length(){
-  return(sqrt(pow(x_comp,2) + pow(y_comp,2)));
-}
-int Boundary::compareto_bound(coordinate pt){
-
-  if (pt.y == (slope * pt.x) + tail.y){ 	//if y = mx + b, the point is on the boundary line
-    return(0);
-  }
-  else if (pt.y > (slope * pt.x) + tail.y){	//if the slope is too small, i.e. the coordinate is past the line
-    return(1);
-  }
-  else if (pt.y < (slope * pt.x) + tail.y){	//if the slope is too big, i.e. the coordinate falls before the line
-    return(-1);
-  }
-  else{						//If you get here, something done went stupid
-    return(0);
-  }
-
-}
-
-
-int Boundary::compareto_slab(coordinate pt, float width){
-  //calculate tail point of second boundary line
-  //Derivation in side notes
-  float m = -1 / slope;
-  float x_prime = width/(pow((1 + m * m), .5));
-  float y_prime = m * x_prime + pt.y;
-  x_prime += pt.x;
-
-  coordinate second_tail(x_prime, y_prime);
-
-  //if compare to bound on both lines is negative 1, the point lies between them.
-  //if it is positive 1, it could be above or below.
-  //It can never be zero...nevermind, i cant do that
-  //i'll just copy most of the code from compareto_bound()
-
-  if (pt.y >= (slope * pt.x) + tail.y && pt.y <= (slope * pt.x) + second_tail.y){ 	//if y = mx + b, the point is on the boundary line
-    return(0);
-  }
-  else if (pt.y > (slope * pt.x) + second_tail.y){	//if the slope is too small, i.e. the coordinate is past the line
-    return(1);
-  }
-  else if (pt.y < (slope * pt.x) + tail.y){	//if the slope is too big, i.e. the coordinate falls before the line
-    return(-1);
-  }
-  else{						//Something done went stupid
-    return(0);
-  }
-}
-
-bool Boundary::intersection(Boundary * crossing){
-  //Check if the crossing points lie on either sides of the reference line
-  //  if slope of reference line is > 0
-  //  	check if top crossing point
-  //Dang this method is hard
-  //Nvm I got it
-  //if the crossing points lie on either side of the reference line, and the reference line points lie on either side of the crossing line, they intersect
-  //  to check if the points lie on either side of the line, see if the product of their point compareto's is -1, (1 * -1)
-
-
-  if (compareto_bound(*((*crossing).getHead())) * compareto_bound(*((*crossing).getTail())) == -1 && (*crossing).compareto_bound(*(getHead())) * (*crossing).compareto_bound(*(getTail())) == -1){
-    return(true);
-  }
-  else{
-    return(false);
-  }
-}
-
-
-
-
-/* Checker class member functions */
-RPSChecker::RPSChecker(){
-  //Initialize RPS values at start
-  begin_X = RPS.X();
-  begin_Y = RPS.Y();
-  begin_Heading = RPS.Heading();
-}
-
-void RPSChecker::check_x_plus(float end_x){
-  //Makes robot travel along x axis
-
-  float closeness;
-  int pos_neg_multiplier;
-
-  //Turn toward positive x axis
-  float start_heading = RPS.Heading();
-  check_heading(0);
-
-  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
-    closeness = (RPS.X() - end_x);
-    pos_neg_multiplier = ((closeness < 0) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
-
-    closeness = abs(closeness);
-    //strong pulse motor if farther away
-    if( closeness > 2){
-      right_motor.SetPercent(65 * pos_neg_multiplier);
-      left_motor.SetPercent(65 * pos_neg_multiplier);
-    }
-    else{
-      right_motor.SetPercent(45 * pos_neg_multiplier);
-      left_motor.SetPercent(45 * pos_neg_multiplier);
-    }
-  } while (closeness > .25);
-  right_motor.SetPercent(0);
-  left_motor.SetPercent(0);
-
-  check_heading(start_heading);
-}
-
-
-void RPSChecker::check_x_minus(float end_x){
-  //Taken from lab 2
-  //Assumes that robot is aligned so it travels forward along negative X axis
-
-  float closeness;
-  int pos_neg_multiplier;
-
-  //Turn toward positive x axis
-  float start_heading = RPS.Heading();
-  check_heading(180);
-
-  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
-    closeness = (end_x - RPS.X());
-    pos_neg_multiplier = ((closeness < 0) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
-
-    closeness = abs(closeness);
-    //strong pulse motor if farther away
-    if( closeness > 2){
-      right_motor.SetPercent(65 * pos_neg_multiplier);
-      left_motor.SetPercent(65 * pos_neg_multiplier);
-    }
-    else{
-      right_motor.SetPercent(45 * pos_neg_multiplier);
-      left_motor.SetPercent(45 * pos_neg_multiplier);
-    }
-  } while (closeness > .25);
-  right_motor.SetPercent(0);
-  left_motor.SetPercent(0);
-
-  check_heading(start_heading);
-}
-
-void RPSChecker::check_y_plus(float end_y){
-  //Taken from lab 2
-  //Assumes that robot is aligned so it travels forward along positive Y axis
-  //float state[3] = current_state();
-  float closeness;
-  int pos_neg_multiplier;
-
-  //Turn toward positive y axis
-  float start_heading = RPS.Heading();
-  check_heading(90);
-
-  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
-    closeness = (RPS.Y() - end_y);
-    pos_neg_multiplier = (((int)(closeness < 0)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
-
-    closeness = abs(closeness);
-    //strong pulse motor if farther away
-    if( closeness > 2){
-      right_motor.SetPercent(65 * pos_neg_multiplier);
-      left_motor.SetPercent(65 * pos_neg_multiplier);
-    }
-    else{
-      right_motor.SetPercent(45 * pos_neg_multiplier);
-      left_motor.SetPercent(45 * pos_neg_multiplier);
-    }
-  } while (closeness > .25);
-  right_motor.SetPercent(0);
-  left_motor.SetPercent(0);
-
-  check_heading(start_heading);
-}
-
-void RPSChecker::check_y_minus(float end_y){
-  //Taken from lab 2
-  //Assumes that robot is aligned so it travels forward along negative Y axis
-  float closeness;
-  int pos_neg_multiplier;
-
-  //Turn toward positive x axis
-  float start_heading = RPS.Heading();
-  check_heading(270);
-
-  do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
-    closeness = (end_y - RPS.Y());
-    pos_neg_multiplier = (((int)(closeness < 0)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
-
-    closeness = abs(closeness);
-    //strong pulse motor if farther away
-    if( closeness > 2){
-      right_motor.SetPercent(65 * pos_neg_multiplier);
-      left_motor.SetPercent(65 * pos_neg_multiplier);
-    }
-    else{
-      right_motor.SetPercent(45 * pos_neg_multiplier);
-      left_motor.SetPercent(45 * pos_neg_multiplier);
-    }
-  } while (closeness > .25);
-  right_motor.SetPercent(0);
-  left_motor.SetPercent(0);
-
-  check_heading(start_heading);
-}
-
-void RPSChecker::check_45(float end_x){
-
-
-}
-
-
-// //////////////////////////////
-// Taken from working code, edited to no longer sway around 90 degrees
-void RPSChecker::check_heading(float heading){
-
-    const int turnPercent = 50;
-        float change = (int)(abs(heading-RPS.Heading()));
-        if(change>180){ change = 360-change; }
-        while(change > .7){
-            float curr_Heading = RPS.Heading();
-            if(curr_Heading < heading || (curr_Heading + change) > 360){ //Turn left
-                right_motor.SetPercent(turnPercent);
-                left_motor.SetPercent(-turnPercent);
-            } //if
-            else { //Turn right
-                right_motor.SetPercent(-turnPercent);
-                left_motor.SetPercent(turnPercent);
-            } //else
-            Sleep(30);
-            change = (int)abs(heading-RPS.Heading());
-            if(change>180){
-                change = 360-change;
-            } //if
-        } //while
-        right_motor.SetPercent(0);
-        left_motor.SetPercent(0);
-    } //check_heading
-// ////////////////////////////////
-
-
-void RPSChecker::check_any_plus(float dest_x, float dest_y, float dest_heading){   //PLUS designates that front stays in the front when it moves
-
-  // NOTE: This method turns toward the final coordinate before moving, then the final desired heading at the end so be careful when to use this
-  //       I mean to say that If you are facing up and you want to check a point 2 inches to the left, make sure you have room to swing through quadrant IV
-
-  coordinate start(RPS.X(), RPS.Y());
-  coordinate end(dest_x, dest_y);
-  Boundary path(start, end);
-
-  //turn to appropriate angle
-  float to_heading = path.getAngle();
-  check_heading(to_heading);   //Send salt bag arm side toward heading
-
-  //Modified from check_x and check_y functions
-  float closeness = (check_distance(dest_x, dest_y));
-  float last_closeness = closeness;
-  int pos_neg_multiplier = 1;
-
-  do {
-    closeness = (check_distance(dest_x, dest_y));
-    pos_neg_multiplier = (((int)(closeness > last_closeness)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward (because distance increases if you pass the point)
-
-    last_closeness = closeness;
-
-    //strong pulse motor if farther away
-    if( closeness > 4){
-      right_motor.SetPercent(65 * pos_neg_multiplier);
-      left_motor.SetPercent(65 * pos_neg_multiplier);
-    }
-    else{
-      right_motor.SetPercent(45 * pos_neg_multiplier);
-      left_motor.SetPercent(45 * pos_neg_multiplier);
-    }
-
-  } while (closeness > 1);
-  right_motor.SetPercent(0);
-  left_motor.SetPercent(0);
-
-  check_heading(dest_heading);
-
-}
-
-void RPSChecker::check_any_minus(float dest_x, float dest_y, float dest_heading){   //PLUS designates that front stays in the front when it moves
-
-  // NOTE: This method turns toward the final coordinate before moving, then the final desired heading at the end so be careful when to use this
-  //       I mean to say that If you are facing up and you want to check a point 2 inches to the left, make sure you have room to swing through quadrant IV
-
-  coordinate start(RPS.X(), RPS.Y());
-  coordinate end(dest_x, dest_y);
-  Boundary path(start, end);
-
-  //turn to appropriate angle
-  float to_heading = path.getAngle();
-  if(to_heading >= 180){ to_heading -= 180;} else{ to_heading += 180;}   //flip the heading to the back of the robot while keeping it under 360
-  check_heading(to_heading);   //Send salt bag arm side toward heading
-
-  //Modified from check_x and check_y functions
-  float closeness = (check_distance(dest_x, dest_y));
-  float last_closeness = closeness;
-  int pos_neg_multiplier = 1;
-
-  do {
-    closeness = (check_distance(dest_x, dest_y));
-    pos_neg_multiplier = (((int)(closeness > last_closeness)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward (because distance increases if you pass the point)
-
-    last_closeness = closeness;
-
-    //strong pulse motor if farther away
-    if( closeness > 4){
-      right_motor.SetPercent(-65 * pos_neg_multiplier);
-      left_motor.SetPercent(-65 * pos_neg_multiplier);
-    }
-    else{
-      right_motor.SetPercent(-45 * pos_neg_multiplier);
-      left_motor.SetPercent(-45 * pos_neg_multiplier);
-    }
-
-  } while (closeness > 1);
-  right_motor.SetPercent(0);
-  left_motor.SetPercent(0);
-
-  check_heading(dest_heading);
-
-}
-
-float RPSChecker::check_distance(float x, float y){
-  coordinate tail(RPS.X(), RPS.Y());
-  coordinate head(x,y);
-  Boundary line(tail, head);
-  return (line.length());
-}
-
-//////////////////////////////////////
-
-
-
