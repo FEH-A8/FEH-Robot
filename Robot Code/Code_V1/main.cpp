@@ -119,7 +119,7 @@ const float cts_per_in= 3.704; //counts per inch
 const float cts_per_deg = .1859; //counts per degree
 
 const int START_DEGREE = 82;
-const int DOWN_DEGREE = 174;
+const int DOWN_DEGREE = 176;
 
 //declares prototypes for functions
 void goToCrank();
@@ -262,7 +262,7 @@ void RPSChecker::check_x_plus(float end_x){
 
   //Turn toward positive x axis
   float start_heading = RPS.Heading();
-  check_heading(0);
+  check_heading(2);
 
   do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
     closeness = (RPS.X() - end_x);
@@ -270,7 +270,7 @@ void RPSChecker::check_x_plus(float end_x){
 
     closeness = abs(closeness);
     //strong pulse motor if farther away
-    if( closeness > 2){
+    if( closeness > 3){
       right_motor.SetPercent(65 * pos_neg_multiplier);
       left_motor.SetPercent(65 * pos_neg_multiplier);
     }
@@ -278,7 +278,7 @@ void RPSChecker::check_x_plus(float end_x){
       right_motor.SetPercent(45 * pos_neg_multiplier);
       left_motor.SetPercent(45 * pos_neg_multiplier);
     }
-  } while (closeness > .25);
+  } while (closeness > 1);
   right_motor.SetPercent(0);
   left_motor.SetPercent(0);
 
@@ -303,7 +303,7 @@ void RPSChecker::check_x_minus(float end_x){
 
     closeness = abs(closeness);
     //strong pulse motor if farther away
-    if( closeness > 2){
+    if( closeness > 3){
       right_motor.SetPercent(65 * pos_neg_multiplier);
       left_motor.SetPercent(65 * pos_neg_multiplier);
     }
@@ -311,7 +311,7 @@ void RPSChecker::check_x_minus(float end_x){
       right_motor.SetPercent(45 * pos_neg_multiplier);
       left_motor.SetPercent(45 * pos_neg_multiplier);
     }
-  } while (closeness > .25);
+  } while (closeness > 1);
   right_motor.SetPercent(0);
   left_motor.SetPercent(0);
 
@@ -335,7 +335,7 @@ void RPSChecker::check_y_plus(float end_y){
 
     closeness = abs(closeness);
     //strong pulse motor if farther away
-    if( closeness > 2){
+    if( closeness > 3){
       right_motor.SetPercent(65 * pos_neg_multiplier);
       left_motor.SetPercent(65 * pos_neg_multiplier);
     }
@@ -343,7 +343,7 @@ void RPSChecker::check_y_plus(float end_y){
       right_motor.SetPercent(45 * pos_neg_multiplier);
       left_motor.SetPercent(45 * pos_neg_multiplier);
     }
-  } while (closeness > .25);
+  } while (closeness > 1);
   right_motor.SetPercent(0);
   left_motor.SetPercent(0);
 
@@ -366,7 +366,7 @@ void RPSChecker::check_y_minus(float end_y){
 
     closeness = abs(closeness);
     //strong pulse motor if farther away
-    if( closeness > 2){
+    if( closeness > 3){
       right_motor.SetPercent(65 * pos_neg_multiplier);
       left_motor.SetPercent(65 * pos_neg_multiplier);
     }
@@ -374,7 +374,7 @@ void RPSChecker::check_y_minus(float end_y){
       right_motor.SetPercent(45 * pos_neg_multiplier);
       left_motor.SetPercent(45 * pos_neg_multiplier);
     }
-  } while (closeness > .25);
+  } while (closeness > 1);
   right_motor.SetPercent(0);
   left_motor.SetPercent(0);
 
@@ -790,11 +790,11 @@ void turnCrank(){
 
                             //CHANGED SOME STUFF HERE
             garmin.check_heading(CRANK_HEADING);
-            servo.SetDegree(0);
+            servo.SetDegree(120);
             Sleep(1200);
             move(percent, 2.5*cts_per_in); //move forward into the crank
             Sleep(1000);
-            servo.SetDegree(120);
+            servo.SetDegree(0);
             Sleep(1200);
             move(-percent, 1.2*cts_per_in); //move backwkards an inch
             Sleep(1000);
@@ -813,11 +813,11 @@ void turnCrank(){
         } else{ //the light is red
 
             garmin.check_heading(CRANK_HEADING);
-            servo.SetDegree(120);
+            servo.SetDegree(0);
             Sleep(1200);
             move(percent, 2.5*cts_per_in); //move forward into the crank
             Sleep(1000);
-            servo.SetDegree(0);
+            servo.SetDegree(120);
             Sleep(1200);
             move(-percent, 1.3*cts_per_in); //move backwkards an inch
             Sleep(1000);
@@ -849,8 +849,11 @@ void getSalt(){
  * This method will deposit the salt into the garage.
  */
 void depositSalt(){
-    servoSalt.SetDegree(START_DEGREE);
+    servoSalt.setDegree(150);
+    move(percent, 4 * cts_per_inch);
+    servoSalt.SetDegree(DOWN_DEGREE);
     move(-(percent-toSlow), cts_per_in*3); //back up and push salt into garage
+    move(percent, 3*cts_per_inch);
 } //depositSalt
 
 /*
@@ -898,9 +901,11 @@ void goToCrank(){
     move(percent, cts_per_in*10);
     turn_left(percent-toSlow, cts_per_deg*45);
 
-    garmin.check_x_plus(BEFORE_RAMP_X);
-    garmin.check_y_plus(BEFORE_RAMP_Y);
     garmin.check_heading(BEFORE_RAMP_HEADING);
+    garmin.check_y_plus(BEFORE_RAMP_Y);
+    garmin.check_x_plus(BEFORE_RAMP_X);
+    garmin.check_heading(BEFORE_RAMP_HEADING);
+
     //garmin.check_any_plus(BEFORE_RAMP_X, BEFORE_RAMP_Y, BEFORE_RAMP_HEADING);
 
     move(percent, cts_per_in*38);   //DIFFERENT VALUE
@@ -932,10 +937,10 @@ void goToButtons(){
  *      the robot will be at the crank
  */
 void goToGarage(){
-    move(-percent, cts_per_in*5);
+    move(-percent, cts_per_in*2);
     turn_right(percent-toSlow, cts_per_deg*90);
     move(-percent, cts_per_in*20);
-    turn_right(percent - toSlow, cts_per_deg*30);
+    turn_right(percent - toSlow, cts_per_deg*45);
     move(-percent, cts_per_in*5);
     garmin.check_x_plus(GARAGE_X);
     garmin.check_y_minus(GARAGE_Y);
