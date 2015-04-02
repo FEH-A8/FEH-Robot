@@ -1,0 +1,194 @@
+#include <FEHLCD.h>
+#include <FEHIO.h>
+#include <FEHUtility.h>
+#include <FEHRPS.h>
+#include <FEHBattery.h>
+
+int main(void)
+{
+    ButtonBoard buttons( FEHIO::Bank3 );
+    LCD.SetOrientation(FEHLCD::East);
+    LCD.Clear( FEHLCD::Black );
+    LCD.SetFontColor( FEHLCD::White );
+
+    float START_LIGHT_X = 18;
+    float START_LIGHT_Y = 30;
+    float START_LIGHT_HEADING = 30;
+
+    float BEFORE_RAMP_X = 30.6;
+    float BEFORE_RAMP_Y = 20.1;
+    float BEFORE_RAMP_HEADING = 92;
+
+    float CRANK_X = 28.8;
+    float CRANK_Y = 58.3;
+    float CRANK_HEADING = 30;
+
+    float SALT_X = 27.9;
+    float SALT_Y = 8.4;
+    float SALT_HEADING = 30;
+
+    float BUTTONS_X = 15.099;
+    float BUTTONS_Y = 64.099;
+    float BUTTONS_HEADING = 30;
+
+    float GARAGE_X = 6.4;
+    float GARAGE_Y = 59.099;
+    float GARAGE_HEADING = 30;
+
+    float SWITCH_X = 13.669;
+    float SWITCH_Y = 9.9;
+    float SWITCH_HEADING = 30;
+
+    int menu = 1;
+    int run = 1;
+
+    RPS.InitializeMenu();
+    while( run == 1 )
+    {
+        if  (buttons.LeftPressed())
+            {
+            menu--;
+            }
+        else if (buttons.RightPressed())
+            {
+                menu++;
+            }
+
+        switch (menu)
+        {
+        case 0:
+            menu = 8;
+            break;
+        case 1:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Salt Bag" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                SALT_X = RPS.X();
+                SALT_Y = RPS.Y();
+                SALT_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(SALT_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(SALT_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(SALT_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 3:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Crank" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                CRANK_X = RPS.X();
+                CRANK_Y = RPS.Y();
+                CRANK_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(CRANK_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(CRANK_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(CRANK_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 2:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Before Ramp" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                BEFORE_RAMP_X = RPS.X();
+                BEFORE_RAMP_Y = RPS.Y();
+                BEFORE_RAMP_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(BEFORE_RAMP_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(BEFORE_RAMP_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(BEFORE_RAMP_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 4:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Buttons" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                BUTTONS_X = RPS.X();
+                BUTTONS_Y = RPS.Y();
+                BUTTONS_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(BUTTONS_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(BUTTONS_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(BUTTONS_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 5:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Garage" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                GARAGE_X = RPS.X();
+                GARAGE_Y = RPS.Y();
+                GARAGE_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(GARAGE_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(GARAGE_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(GARAGE_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 6:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Oil Pump" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                SWITCH_X = RPS.X();
+                SWITCH_Y = RPS.Y();
+                SWITCH_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(SWITCH_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(SWITCH_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(SWITCH_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 7:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine( "Starting Location" );
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                START_LIGHT_X = RPS.X();
+                START_LIGHT_Y = RPS.Y();
+                START_LIGHT_HEADING = RPS.Heading();
+                LCD.Write( "X = ");  LCD.WriteLine(START_LIGHT_X);
+                LCD.Write( "Y = ");  LCD.WriteLine(START_LIGHT_Y);
+                LCD.Write( "Heading = ");  LCD.WriteLine(START_LIGHT_HEADING);
+                Sleep(1000);
+                menu++;
+            }//Press Middle Button
+            break;
+        case 8:
+            LCD.Clear( FEHLCD::Black );
+            LCD.WriteLine("Press Middle Button to End.");
+            Sleep(250);
+            if( buttons.MiddlePressed() )
+            {
+                run = 0;
+            }
+            break;
+        case 9:
+            menu=1;
+            break;
+
+         }//Switch Case
+
+    }// Menu
+
+
+    return 0;
+}
+
