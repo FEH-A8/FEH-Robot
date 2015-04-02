@@ -108,10 +108,10 @@ float SWITCH_X = 13.669;
 float SWITCH_Y = 9.9;
 float SWITCH_HEADING = 30;
 
-float NORTH = 90;
-float EAST  = 0;
-float SOUTH = 180;
-float WEST  = 270;
+const float NORTH = 90;
+const float EAST  = 0;
+const float SOUTH = 180;
+const float WEST  = 270;
 
 const int percent = 60; //sets the motor percent for the rest of the code
 const int toSlow = 15; //this int will be the fix required for the robot to travel among the course
@@ -923,13 +923,15 @@ void goToCrank(){
 /*
  * This method will take the robot from the crank to the buttons
  * @pre
- *      the robot will be at the crank
+ *      the robot will be at the garage
  */
 void goToButtons(){
     servoSalt.SetDegree(START_DEGREE);
     turn_left(percent-toSlow, cts_per_deg*90);
     move(percent, cts_per_in*3);
     turn_left(percent-toSlow, cts_per_deg*90);
+    garmin.check_x_minus(BUTTONS_X);
+    garmin.check_y_plus(BUTTONS_Y);
     garmin.check_heading(BUTTONS_HEADING);
 } //goToButtons
 
@@ -938,12 +940,14 @@ void goToButtons(){
  * After this method is called, the robot should be in good position
  * to deposit the salt into the garage.
  * @pre
- *      the robot will be at the buttons
+ *      the robot will be at the crank
  */
 void goToGarage(){
-    turn_right(percent-toSlow, cts_per_deg*90);
-    move(-percent, cts_per_in*2);
+    turn_right(percent-toSlow, cts_per_deg*60);
+    move(-percent, cts_per_in*12);
     turn_right(percent - toSlow, cts_per_deg*45);
+    garmin.check_x_plus(GARAGE_X);
+    garmin.check_y_minus(GARAGE_Y);
     garmin.check_heading(GARAGE_HEADING);
 } //goToGarage
 
