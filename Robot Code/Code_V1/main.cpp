@@ -108,10 +108,16 @@ float SWITCH_X = 13.669;
 float SWITCH_Y = 9.9;
 float SWITCH_HEADING = 30;
 
-const float NORTH = 90;
-const float EAST  = 0;
-const float SOUTH = 180;
-const float WEST  = 270;
+float NORTH = 90;
+float EAST  = 0;
+float SOUTH = 180;
+float WEST  = 270;
+
+//New values
+const int SERVO_RED = 125;
+const int SERVO_BLUE = 50;
+const int SERVO_WHITE = 90;
+ 
 
 const int percent = 60; //sets the motor percent for the rest of the code
 const int toSlow = 15; //this int will be the fix required for the robot to travel among the course
@@ -1258,3 +1264,92 @@ int main(void)
 
     return 0;
 } //main
+
+
+// New Button Function
+ 
+  bool pressedButton(int);	//Determines which button check to run
+  bool pressedRed();	//Assumes robot is on wall at red. returns true if the red button was successfully pressed after 3 tries
+  bool pressedBlue();	//Assumes robot is on wall at blue. returns true if the blue button was successfully pressed after 3 tries
+  bool pressedWhite();	//Assumes robot is on wall at white. returns true if the white button was successfully pressed after 3 tries
+  void pushButtons();
+ 
+  bool pressedRed(){
+    for(int i = 0; i<3; i++){
+      if(RPS.RedButtonPressed()){ return( true ); }
+      
+      //move back and try again
+      move(-50, cts_per_inch*2);
+      garmin.check_heading(BUTTONS_HEADING);
+      move(55, cts_per_inch*2);
+    }
+    if(RPS.RedButtonPressed()){ return( true ); }
+
+    return(false);
+  }
+  bool pressedWhite(){
+    for(int i = 0; i<3; i++){
+      if(RPS.WhiteButtonPressed()){ return( true ); }
+      
+      //move back and try again
+      move(-50, cts_per_inch*2);
+      garmin.check_heading(BUTTONS_HEADING);
+      move(55, cts_per_inch*2);
+    }
+    if(RPS.WhiteButtonPressed()){ return( true ); }
+   
+    return(false); 
+  }  
+  bool pressedBlue(){
+    for(int i = 0; i<3; i++){
+      if(RPS.BlueButtonPressed()){ return( true ); }
+      
+      //move back and try again
+      move(-50, cts_per_inch*2);
+      garmin.check_heading(BUTTONS_HEADING);
+      move(55, cts_per_inch*2);
+    }
+    if(RPS.BlueButtonPressed()){ return( true ); }
+    
+    return(false);
+  }
+
+  bool pressedButton(int button){
+    switch(button){
+      case 0:
+	return(pressedRed());
+	break;
+      case 1:
+	return(pressedWhite());
+	break;
+      case 2:
+	return(pressedBlue());
+	break;
+      default:
+	return(false);
+    }
+  }
+
+/*
+ void pushButtons(){	//Assumes robot is two inches away from buttons
+   int rwb[3] = { RPS.RedButtonOrder(), RPS.WhiteButtonOrder(), RPS.BlueButtonOrder() };
+   int order[3];
+   int rwb_degree[3] = { SERVO_RED, SERVO_WHITE, SERVO_BLUE };
+
+   //0 = red, 1 = white, 2 = blue
+   //order has the order that the buttons need to be pressed
+   for(int i = 0; i<3; i++){
+     order[rwb[i] - 1] = i;
+   }
+
+   for(int j = 0; j < 3; j++){
+     servo.SetDegree(rwb_degree[order[i]]);
+     move(55, cts_per_inch*2);
+     if(!pressedButton[order[i]]){
+       break;
+     }
+     move(-50, cts_per_inch * 2);
+   }
+ 
+}
+*/
