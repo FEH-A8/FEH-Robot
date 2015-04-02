@@ -705,9 +705,9 @@ const int SERVO_WHITE = 90;
       if(RPS.RedButtonPressed()){ return( true ); }
 
       //move back and try again
-      move(-50, cts_per_inch*2);
+      move(-50, cts_per_in*2);
       garmin.check_heading(BUTTONS_HEADING);
-      move(55, cts_per_inch*2);
+      move(55, cts_per_in*2);
     }
     if(RPS.RedButtonPressed()){ return( true ); }
 
@@ -718,9 +718,9 @@ const int SERVO_WHITE = 90;
       if(RPS.WhiteButtonPressed()){ return( true ); }
 
       //move back and try again
-      move(-50, cts_per_inch*2);
+      move(-50, cts_per_in*2);
       garmin.check_heading(BUTTONS_HEADING);
-      move(55, cts_per_inch*2);
+      move(55, cts_per_in*2);
     }
     if(RPS.WhiteButtonPressed()){ return( true ); }
 
@@ -731,9 +731,9 @@ const int SERVO_WHITE = 90;
       if(RPS.BlueButtonPressed()){ return( true ); }
 
       //move back and try again
-      move(-50, cts_per_inch*2);
+      move(-50, cts_per_in*2);
       garmin.check_heading(BUTTONS_HEADING);
-      move(55, cts_per_inch*2);
+      move(55, cts_per_in*2);
     }
     if(RPS.BlueButtonPressed()){ return( true ); }
 
@@ -768,10 +768,10 @@ const int SERVO_WHITE = 90;
    }
 
    for(int j = 0; j < 3; j++){
-     servo.SetDegree(rwb_degree[order[i]]);
-     move(55, cts_per_inch*2);
-     pressedButton[order[i]];
-     move(-50, cts_per_inch * 2);
+     servo.SetDegree(rwb_degree[order[j]]);
+     move(55, cts_per_in*2);
+     pressedButton(order[j]);
+     move(-50, cts_per_in * 2);
    }
 
 }
@@ -1114,7 +1114,7 @@ void Record_RPS()
             Sleep(250);
             if( buttons.MiddlePressed() )
             {
-                NORTH = RPS.Heading();
+                //NORTH = RPS.Heading();
                 LCD.Write( "Heading = ");  LCD.WriteLine(NORTH);
                 Sleep(1000);
                 menu++;
@@ -1126,7 +1126,7 @@ void Record_RPS()
             Sleep(250);
             if( buttons.MiddlePressed() )
             {
-                EAST = RPS.Heading();
+                //EAST = RPS.Heading();
                 LCD.Write( "Heading = ");  LCD.WriteLine(EAST);
                 Sleep(1000);
                 menu++;
@@ -1138,7 +1138,7 @@ void Record_RPS()
             Sleep(250);
             if( buttons.MiddlePressed() )
             {
-                SOUTH = RPS.Heading();
+                //SOUTH = RPS.Heading();
                 LCD.Write( "Heading = ");  LCD.WriteLine(SOUTH);
                 Sleep(1000);
                 menu++;
@@ -1150,7 +1150,7 @@ void Record_RPS()
             Sleep(250);
             if( buttons.MiddlePressed() )
             {
-                WEST = RPS.Heading();
+                //WEST = RPS.Heading();
                 LCD.Write( "Heading = ");  LCD.WriteLine(WEST);
                 Sleep(1000);
                 menu++;
