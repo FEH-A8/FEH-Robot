@@ -934,8 +934,9 @@ void goToButtons(){
 void goToGarage(){
     move(-percent, cts_per_in*5);
     turn_right(percent-toSlow, cts_per_deg*90);
-    move(-percent, cts_per_in*22);
+    move(-percent, cts_per_in*20);
     turn_right(percent - toSlow, cts_per_deg*30);
+    move(-percent, cts_per_in*5);
     garmin.check_x_plus(GARAGE_X);
     garmin.check_y_minus(GARAGE_Y);
     garmin.check_heading(GARAGE_HEADING);
