@@ -391,12 +391,15 @@ void check_heading(float heading){
 
 int main(void)
 {
-
+float heading;
+float saltUp = 90;
+float saltDown = 172;
+float saltRamp = 178;
     //initialize positions and calibrate servo motors
        servoSalt.SetMin(521);
        servoSalt.SetMax(2341);
        servo.SetMin(500);
-       servo.SetMax(2266);
+       servo.SetMax(2260);
 
 
     //initialize encoder thresholds
@@ -412,7 +415,7 @@ int main(void)
 
     //initialize positions of servo motors
     servo.SetDegree(180);
-    servoSalt.SetDegree(82);
+    servoSalt.SetDegree(saltUp);
     Sleep(1000);
 
 
@@ -420,28 +423,31 @@ int main(void)
 
     //Order of steps from sheet
     //1
+    heading = RPS.Heading();
     backward(11);
-    turn_left(45);
+    turn_left(43);
 
     LCD.Write("PART 1");
 
     //2
-    backward(9);
-    servoSalt.SetDegree(178);
+    backward(8);
+    servoSalt.SetDegree(saltDown);
     Sleep(1200);
     forward(4);
     LCD.Write("PART 2");
 
     //3
-    turn_right(94);
-    forward(10);
-    turn_left(45);
+    turn_right(100);
+    forward(12);
+    turn_left(47);
     LCD.Write("PART 3");
 
     //4 (before ramp)
-    check_heading(90);
-    servoSalt.SetDegree(180);
-    forward(35);
+    check_heading(heading+2);
+    servoSalt.SetDegree(saltRamp);
+    forward(30);
+    servoSalt.SetDegree(saltUp);
+    forward(5);
     check_heading(90);
     LCD.Write("PART 4");
 
@@ -453,31 +459,36 @@ int main(void)
     backward(2);
     turn_right(90);
 
+
     //7-10  moving from crank to garage
+    servoSalt.SetDegree(saltDown);
     backward(20);
+    servoSalt.SetDegree(saltUp);
     turn_right(40);
     backward(5);
 
     //11  push salt into garage
-    servoSalt.SetDegree(150);
+    //servoSalt.SetDegree(150);
     Sleep(1000);
     forward(6);
-    servoSalt.SetDegree(174);
+    //servoSalt.SetDegree(174);
     Sleep(1000);
     backward(6);
-    forward(6);
-    turn_left(90);
+    forward(4);
+    turn_left(95);
 
     //12 go to buttons
-    forward(10);
+    forward(8);
     turn_left(87);
+    check_heading(heading+45);
     pushButtons();
 
     //13 go to top of avalanche
-    backward(4);
     turn_right(90);
-    forward(16);
+    backward(16);
     turn_left(45);
+    servoSalt.SetDegree(82);
+    backward(16);
 
 
 
