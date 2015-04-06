@@ -32,6 +32,7 @@ void turnCrank(){
         if (cds_value > .35){ //the light is blue
 
                             //CHANGED SOME STUFF HERE
+            LCD.Write("THE LIGHT IS BLUE");
             servo.SetDegree(180);
             Sleep(1200);
             forward(2.5); //move forward into the crank
@@ -54,6 +55,7 @@ void turnCrank(){
 
         } else{ //the light is red
 
+            LCD.Write("THE LIGHT IS RED");
             servo.SetDegree(60);
             Sleep(1200);
             forward(2.5); //move forward into the crank
@@ -392,9 +394,8 @@ void check_heading(float heading){
 int main(void)
 {
 float heading;
-float saltUp = 90;
-float saltDown = 172;
-float saltRamp = 178;
+float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltSwitch = 116, oil_push = 106, oil_pull = 120;
+
     //initialize positions and calibrate servo motors
        servoSalt.SetMin(521);
        servoSalt.SetMax(2341);
@@ -415,7 +416,7 @@ float saltRamp = 178;
 
     //initialize positions of servo motors
     servo.SetDegree(180);
-    servoSalt.SetDegree(saltUp);
+    servoSalt.SetDegree(saltStart);
     Sleep(1000);
 
 
@@ -423,6 +424,7 @@ float saltRamp = 178;
 
     //Order of steps from sheet
     //1
+    servoSalt.SetDegree(saltUp);
     heading = RPS.Heading();
     backward(11);
     turn_left(43);
@@ -438,16 +440,16 @@ float saltRamp = 178;
 
     //3
     turn_right(100);
-    forward(12);
+    forward(14
+
+            );
     turn_left(47);
     LCD.Write("PART 3");
 
     //4 (before ramp)
-    check_heading(heading+2);
+    check_heading(heading);
     servoSalt.SetDegree(saltRamp);
-    forward(30);
-    servoSalt.SetDegree(saltUp);
-    forward(5);
+    forward(33);
     check_heading(90);
     LCD.Write("PART 4");
 
@@ -455,23 +457,24 @@ float saltRamp = 178;
     turnCrank();
     LCD.Write("PART 5");
 
-    //6 moving from crank to garage
-    backward(2);
+
+
+
+    //6-10  moving from crank to garage
     turn_right(90);
-
-
-    //7-10  moving from crank to garage
+    check_heading(0);
     servoSalt.SetDegree(saltDown);
     backward(20);
-    servoSalt.SetDegree(saltUp);
-    turn_right(40);
+    turn_right(45);
+    check_heading(315);
     backward(5);
 
+
     //11  push salt into garage
-    //servoSalt.SetDegree(150);
+    servoSalt.SetDegree(150);
     Sleep(1000);
     forward(6);
-    //servoSalt.SetDegree(174);
+    servoSalt.SetDegree(saltDown);
     Sleep(1000);
     backward(6);
     forward(4);
