@@ -395,8 +395,28 @@ void check_heading(float heading){
 
 void driveToCrank(){	//Assumes that robot is below ramp lined up with crank
   //TODO: Incorporate RPS X check?
+  //This is how:
+    //Take x position
+    //theta difference = arcsin(desired distance y_offset / x_offset)
+    //inches to be travelled = desired incehs (32.4) * ||inch RPS vector||/RPS dist
+    //if RPS.X > x, add to original angle (90)
+    //else subtract
+    //go inch distance
 
-  float inches = 31.5;
+    float my_x = RPS.X(), my_y = RPS.Y();
+    float dest_x = 30.6;       //temporary
+    float dest_y= 55.9;        //temporary
+    float delta_x = dest_x- my_x, delta_y = dest_y - my_y;
+    float theta = atan((delta_y)/(abs(delta_x)));
+    float inches = 33.4 * (sqrt((delta_y * delta_y) + (delta_x*delta_x)))/delta_y;
+    float angle = 90;
+    if(delta_x < 0){
+        angle+=theta;
+    }
+    else{
+        angle-=theta;
+    }
+
   int counts = inches * 5.25;
   int left_motor_adjust = 0, right_motor_adjust = 0;
   float heading;
@@ -412,19 +432,19 @@ void driveToCrank(){	//Assumes that robot is below ramp lined up with crank
     heading = RPS.Heading();
     cycle_spent_off_track++;	//Assume robot is off track unbtil proven otherwise
 
-    if(heading <= 90 - cycle_spent_off_track/2){		//needs minor correction
+    if(heading <= angle - cycle_spent_off_track/2){		//needs minor correction
       left_motor_adjust = 0;
       right_motor_adjust++;
-      if(heading <= 88 - cycle_spent_off_track){	//needs major correction
+      if(heading <= angle-2 - cycle_spent_off_track){	//needs major correction
     right_motor_adjust += 2;
       }
       right_motor.SetPercent(60 + right_motor_adjust/3);
       left_motor.SetPercent(60 + left_motor_adjust/3);
     }
-    else if(heading >= 90 + cycle_spent_off_track/2){	//needs minor correction
+    else if(heading >= angle + cycle_spent_off_track/2){	//needs minor correction
       right_motor_adjust = 0;
       left_motor_adjust++;
-      if(heading >= 92 + cycle_spent_off_track){	//needs major correction
+      if(heading >= angle+2 + cycle_spent_off_track){	//needs major correction
         left_motor_adjust += 2;
       }
       right_motor.SetPercent(60 + right_motor_adjust/3);
@@ -493,7 +513,7 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     //1
     heading = RPS.Heading();
     servoSalt.SetDegree(saltUp);
-    Sleep(400);
+    Sleep(600);
 
     backward(11);
     turn_left(43);
@@ -501,17 +521,16 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     LCD.Write("PART 1");
 
     //2
-    backward(8);
-    check_heading(heading+45);
+    backward(8.2);
     servoSalt.SetDegree(saltDown);
     Sleep(1200);
     forward(2.5);
     LCD.Write("PART 2");
 
     //3
-    turn_right(105);
-    forward(11.5);
-    turn_left(52);
+    turn_right(110);
+    forward(11);
+    turn_left(57);
     LCD.Write("PART 3");
 
     //4 (before ramp)
@@ -519,7 +538,7 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     servoSalt.SetDegree(saltRamp);  //Salt into ground
     driveToCrank();                 //gets it in front of crank
     servoSalt.SetDegree(saltDown);
-    check_heading(90);
+    check_heading(heading);
     LCD.Write("PART 4");
 
     //5  at the crank
@@ -532,29 +551,29 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
 
     //Clamp on to snow and swing it right
     servoSalt.SetDegree(saltUp);
-    turn_right(90);
+    turn_right(95);
     backward(1.5);
-    servoSalt.SetDegree(160);
+    servoSalt.SetDegree(165);
     Sleep(1000);
-    turn_right(75);
+    turn_right(50,110);
     //and left
     servoSalt.SetDegree(saltUp);
-    turn_left(45);
+    turn_left(50,65);
     servoSalt.SetDegree(saltDown);
     Sleep(500);
-    turn_left(40);
+    turn_left(50,40);
     turn_right(10);
     servoSalt.SetDegree(saltUp);
     //go back and get the salt bag
     forward(2);
     turn_left(90);
-    check_heading(90);
+    check_heading(heading);
     servoSalt.SetDegree(saltDown);
 
     turn_right(90);
     check_heading(0);
     backward(19);
-    turn_right(45);
+    turn_right(43);
     check_heading(318);
     backward(3);
 
@@ -563,24 +582,29 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     servoSalt.SetDegree(saltGarage);
     Sleep(1000);
     forward(6);
+
+    /* Remove pushing salt back in
     servoSalt.SetDegree(saltDown);
     Sleep(1000);
     backward(6);
     forward(3);
-    turn_left(120);
+    */
+    servoSalt.SetDegree(saltUp);
+    turn_left(155);
 
     //12 go to buttons
-    servoSalt.SetDegree(130);
-    forward(7);
-    turn_left(87);
+    forward(9);
+
+    turn_left(57);
     check_heading(heading+45);
-    forward(3);
+    forward(2);
     pushButtons();
 
     //13 go to top of avalanche
     turn_right(80);
     backward(16);
     turn_left(45);
+    servoSalt.SetDegree(130);
     backward(16);
 
     return 0;
