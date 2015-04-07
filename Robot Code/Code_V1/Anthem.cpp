@@ -59,32 +59,13 @@ DigitalInputPin bump (FEHIO::P1_3);
     int lineAtBeat(int);
     int sincestartMSec();
     int beatNow();
+    void FlagDisplay();
     void AnthemDisplay(int);
     void recallPatriotism(int);
                                          //
 ///////////////////////////////////////////
 
 
-int main(void)
-{
-    ButtonBoard buttons( FEHIO::Bank3 );
-
-    LCD.Clear( FEHLCD::Black );
-    LCD.SetFontColor( FEHLCD::White );
-
-    while( true )
-    {
-        if( buttons.MiddlePressed() )
-        {
-            LCD.WriteLine( "Hello World!" );
-            Sleep( 1000 );
-            _GLOBAL_START = TimeNowMSec();
-            LCD.Clear( FEHLCD::Black );
-            recallPatriotism(60000);
-        }
-    }
-    return 0;
-}
 
 
 
@@ -154,6 +135,31 @@ int main(void)
 
                                          //
 ///////////////////////////////////////////
+
+
+void FlagDisplay(){
+    LCD.SetFontColor( FEHLCD::Blue );
+    LCD.FillRectangle(0,0,100,60);
+
+    LCD.SetFontColor( FEHLCD::White );
+    LCD.FillRectangle(100,10,140,10);
+    LCD.FillRectangle(100,30,140,10);
+    LCD.FillRectangle(100,50,140,10);
+    LCD.FillRectangle(0,70,240,10);
+    LCD.FillRectangle(0,90,240,10);
+    LCD.FillRectangle(0,110,240,10);
+
+    LCD.SetFontColor( FEHLCD::Red );
+    LCD.FillRectangle(100,0,140,10);
+    LCD.FillRectangle(100,20,140,10);
+    LCD.FillRectangle(100,40,140,10);
+    LCD.FillRectangle(0,60,240,10);
+    LCD.FillRectangle(0,80,240,10);
+    LCD.FillRectangle(0,100,240,10);
+    LCD.FillRectangle(0,120,240,10);
+    
+    LCD.SetFontColor( FEHLCD::White );
+}
 
 
 
