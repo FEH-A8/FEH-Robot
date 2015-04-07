@@ -21,8 +21,8 @@ DigitalInputPin bump (FEHIO::P1_3);
 
 
 
-void forward(int);
-void backward(int);
+void forward(float);
+void backward(float);
 
 void turnCrank(){
 
@@ -34,13 +34,13 @@ void turnCrank(){
                             //CHANGED SOME STUFF HERE
             LCD.Write("THE LIGHT IS BLUE");
             servo.SetDegree(180);
-            Sleep(1200);
+            Sleep(500);
             forward(2.5); //move forward into the crank
-            Sleep(1000);
+            Sleep(500);
             servo.SetDegree(60);
-            Sleep(1200);
-            backward(1.2); //move backwkards an inch
-            Sleep(1000);
+            Sleep(500);
+            backward(0.7); //move backwkards an inch
+            Sleep(500);
 
             //read new value and increment if light reading changed
             cds_value = CdS.Value();
@@ -57,13 +57,13 @@ void turnCrank(){
 
             LCD.Write("THE LIGHT IS RED");
             servo.SetDegree(60);
-            Sleep(1200);
+            Sleep(500);
             forward(2.5); //move forward into the crank
-            Sleep(1000);
+            Sleep(500);
             servo.SetDegree(180);
-            Sleep(1200);
-            backward(1.2); //move backwkards an inch
-            Sleep(1000);
+            Sleep(500);
+            backward(0.7); //move backwkards an inch
+            Sleep(500);
 
             //read new value and increment if light reading changed
             cds_value = CdS.Value();
@@ -103,7 +103,7 @@ const int SERVO_WHITE = 90;
 
       //move back and try again
       //move back and try again
-      forward(2.4);
+      forward(2+i);
       backward(2);
     }
     if(RPS.RedButtonPressed()){ return( true ); }
@@ -116,7 +116,7 @@ const int SERVO_WHITE = 90;
 
       //move back and try again
       //move back and try again
-      forward(2.4);
+      forward(2+i);
       backward(2);
     }
     if(RPS.WhiteButtonPressed()){ return( true ); }
@@ -128,7 +128,7 @@ const int SERVO_WHITE = 90;
       if(RPS.BlueButtonPressed()){ return( true ); }
 
       //move back and try again
-      forward(2.4);
+      forward(2+i);
       backward(2);
     }
     if(RPS.BlueButtonPressed()){ return( true ); }
@@ -168,9 +168,7 @@ const int SERVO_WHITE = 90;
 
    for(int j = 0; j < 3; j++){
      servo.SetDegree(rwb_degree[order[j]]);
-     forward(2);
      pressedButton(order[j]);
-     backward(2);
    }
 
 }//push buttons
@@ -179,11 +177,11 @@ const int SERVO_WHITE = 90;
 
 
 
-void forward(int inches){
+void forward(float inches){
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
 
-    left_motor.SetPercent(70);
+    left_motor.SetPercent(68);
     right_motor.SetPercent(70);
 
     while(left_encoder.Counts() + right_encoder.Counts() / 2. < (inches * 5.25)){
@@ -203,7 +201,7 @@ void forward(int inches){
 
 }
 
-void forward(int percent, int inches){
+void forward(int percent, float inches){
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
 
@@ -228,11 +226,11 @@ void forward(int percent, int inches){
 
 }
 
-void backward(int inches){
+void backward(float inches){
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
 
-    left_motor.SetPercent(-70);
+    left_motor.SetPercent(-68);
     right_motor.SetPercent(-70);
 
     while(left_encoder.Counts() + right_encoder.Counts() / 2. < (inches * 5.25)){
@@ -251,7 +249,7 @@ void backward(int inches){
 }
 
 
-void backward(int percent, int inches){
+void backward(int percent, float inches){
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
 
@@ -299,8 +297,8 @@ void turn_right(int degrees){
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
 
-    left_motor.SetPercent(68);
-    right_motor.SetPercent(-68);
+    left_motor.SetPercent(65);
+    right_motor.SetPercent(-65);
     while(left_encoder.Counts() + right_encoder.Counts() / 2. < degrees * .1859){
 
         LCD.WriteLine(left_encoder.Counts());
@@ -363,10 +361,10 @@ void turn_left(int percent, int degrees){
 // Taken from working code, edited to no longer sway around 90 degrees
 void check_heading(float heading){
 
-    const int turnPercent = 50;
+    const int turnPercent = 40;
         float change = (int)(abs(heading-RPS.Heading()));
         if(change>180){ change = 360-change; }
-        while(change > 4){
+        while(change > 2){
             float curr_Heading = RPS.Heading();
             if(curr_Heading < heading || (curr_Heading + change) > 360){ //Turn left
                 right_motor.SetPercent(turnPercent);
@@ -377,6 +375,8 @@ void check_heading(float heading){
                 left_motor.SetPercent(turnPercent);
             } //else
             Sleep(30);
+            right_motor.SetPercent(0);
+            left_motor.SetPercent(0);
             change = (int)abs(heading-RPS.Heading());
             if(change>180){
                 change = 360-change;
@@ -389,6 +389,7 @@ void check_heading(float heading){
         Sleep(1000);
     } //check_heading
 // ////////////////////////////////
+
 
 void driveToCrank(){	//Assumes that robot is lined up with crank
   float inches = 31.5;
@@ -441,7 +442,7 @@ void driveToCrank(){	//Assumes that robot is lined up with crank
 int main(void)
 {
 float heading;
-float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltSwitch = 116, oil_push = 106, oil_pull = 120;
+float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 130, saltSwitch = 116, oil_push = 106, oil_pull = 120;
 
     //initialize positions and calibrate servo motors
        servoSalt.SetMin(521);
@@ -471,8 +472,10 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltSwitch = 
 
     //Order of steps from sheet
     //1
-    servoSalt.SetDegree(saltUp);
     heading = RPS.Heading();
+    servoSalt.SetDegree(saltUp);
+    Sleep(400);
+
     backward(11);
     turn_left(43);
 
@@ -480,6 +483,7 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltSwitch = 
 
     //2
     backward(8);
+    check_heading(heading+45);
     servoSalt.SetDegree(saltDown);
     Sleep(1200);
     forward(4);
@@ -487,16 +491,15 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltSwitch = 
 
     //3
     turn_right(100);
-    forward(14
-
-            );
+    forward(11.5);
     turn_left(47);
     LCD.Write("PART 3");
 
     //4 (before ramp)
     check_heading(heading);
     servoSalt.SetDegree(saltRamp);
-    forward(33);
+    driveToCrank();
+    servoSalt.SetDegree(saltDown);
     check_heading(90);
     LCD.Write("PART 4");
 
@@ -505,39 +508,60 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltSwitch = 
     LCD.Write("PART 5");
 
 
-
-
     //6-10  moving from crank to garage
+    backward(2);
+
+    //Clamp on to snow and swing it right
+    servoSalt.SetDegree(saltUp);
     turn_right(90);
     check_heading(0);
+    backward(1.5);
+    servoSalt.SetDegree(160);
+    Sleep(600);
+    turn_right(60);
+    //and left
+    servoSalt.SetDegree(saltUp);
+    turn_left(45);
     servoSalt.SetDegree(saltDown);
-    backward(20);
+    Sleep(500);
+    turn_left(25);
+    turn_right(10);
+    servoSalt.SetDegree(saltUp);
+    //go back and get the salt bag
+    forward(2);
+    turn_left(90);
+    check_heading(90);
+    servoSalt.SetDegree(saltDown);
+
+    turn_right(90);
+    check_heading(0);
+    backward(19);
     turn_right(45);
     check_heading(315);
-    backward(5);
+    backward(3);
 
 
     //11  push salt into garage
-    servoSalt.SetDegree(150);
+    servoSalt.SetDegree(saltGarage);
     Sleep(1000);
     forward(6);
     servoSalt.SetDegree(saltDown);
     Sleep(1000);
     backward(6);
-    forward(4);
-    turn_left(95);
+    forward(3);
+    turn_left(120);
 
     //12 go to buttons
-    forward(8);
+    servoSalt.SetDegree(130);
+    forward(6);
     turn_left(87);
     check_heading(heading+45);
     pushButtons();
 
     //13 go to top of avalanche
-    turn_right(90);
+    turn_right(80);
     backward(16);
     turn_left(45);
-    servoSalt.SetDegree(82);
     backward(16);
 
 
