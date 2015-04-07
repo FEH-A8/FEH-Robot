@@ -395,7 +395,7 @@ void check_heading(float heading){
 
 void driveToCrank(){	//Assumes that robot is below ramp lined up with crank
   //TODO: Incorporate RPS X check?
-  
+
   float inches = 31.5;
   int counts = inches * 5.25;
   int left_motor_adjust = 0, right_motor_adjust = 0;
@@ -462,20 +462,20 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     //Print the current battery state to the screen
     LCD.SetOrientation(FEHLCD::East);
     LCD.Clear( FEHLCD::Black );
-    
+
     //Ask to initialize necessary coordinates?
     LCD.WriteLine("Initailize coordinates?");
     LCD.WriteLine("L - yes");
     LCD.WriteLine("R - no");
     while(true){
-        if(buttons.RightButtonPressed()){
+        if(buttons.RightPressed()){
             break;
         }
-        else if(buttons.LeftButtonPressed()){
+        else if(buttons.LeftPressed()){
             LCD.Clear( FEHLCD::Black);
-            
+
         }
-            
+
     }
 
    //Initialize RPS
@@ -505,13 +505,13 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     check_heading(heading+45);
     servoSalt.SetDegree(saltDown);
     Sleep(1200);
-    forward(4);
+    forward(2.5);
     LCD.Write("PART 2");
 
     //3
-    turn_right(100);
+    turn_right(105);
     forward(11.5);
-    turn_left(47);
+    turn_left(52);
     LCD.Write("PART 3");
 
     //4 (before ramp)
@@ -533,17 +533,16 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     //Clamp on to snow and swing it right
     servoSalt.SetDegree(saltUp);
     turn_right(90);
-    check_heading(0);
     backward(1.5);
     servoSalt.SetDegree(160);
-    Sleep(600);
-    turn_right(60);
+    Sleep(1000);
+    turn_right(75);
     //and left
     servoSalt.SetDegree(saltUp);
     turn_left(45);
     servoSalt.SetDegree(saltDown);
     Sleep(500);
-    turn_left(25);
+    turn_left(40);
     turn_right(10);
     servoSalt.SetDegree(saltUp);
     //go back and get the salt bag
@@ -556,7 +555,7 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     check_heading(0);
     backward(19);
     turn_right(45);
-    check_heading(315);
+    check_heading(318);
     backward(3);
 
 
@@ -572,9 +571,10 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
 
     //12 go to buttons
     servoSalt.SetDegree(130);
-    forward(6);
+    forward(7);
     turn_left(87);
     check_heading(heading+45);
+    forward(3);
     pushButtons();
 
     //13 go to top of avalanche
@@ -582,18 +582,6 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     backward(16);
     turn_left(45);
     backward(16);
-
-
-
-
-
-
-
-
-
-
-
-
 
     return 0;
 } //main
