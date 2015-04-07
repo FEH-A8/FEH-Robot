@@ -27,7 +27,8 @@ void backward(float);
 void turnCrank(){
 
     float cds_value = CdS.Value();
-    int cds_miscount = 0;       //counts changes to CdS miscount
+    float inital_reading = cds_value;
+    int cds_miscount = 0;       //counts the changes to CdS reading
     for (int i=0; i<4; i++){
         if (cds_value > .35){ //the light is blue
 
@@ -43,13 +44,13 @@ void turnCrank(){
             Sleep(500);
 
             //read new value and increment if light reading changed
-            cds_value = CdS.Value();
+            if(cds_value != 5) {cds_value = CdS.Value();}         //If not forced to stay in the loop, see if we changed our mind
             if (cds_value <= .35 && cds_miscount<2){
                 cds_miscount++;
                 i = 0;
             }
             if(cds_miscount >= 2){
-                cds_value = 0;      //stay within this loop if the robot changes its mind more than twice
+                cds_value = 5;      //stay within this loop if the robot changes its mind more than twice
             }
 
 
@@ -66,13 +67,13 @@ void turnCrank(){
             Sleep(500);
 
             //read new value and increment if light reading changed
-            cds_value = CdS.Value();
+            if(cds_value!=-1){cds_value = CdS.Value();}         //If not forced to stay in the loop, see if we changed our mind
             if (cds_value <= .35 && cds_miscount<2){
                 cds_miscount++;
                 i = 0;
             }
             if(cds_miscount >= 2){
-                cds_value = 1;      //stay within this loop if the robot changes its mind more than twice
+                cds_value = -1;      //stay within this loop if the robot changes its mind more than twice
             }
         }
     }
@@ -391,7 +392,9 @@ void check_heading(float heading){
 // ////////////////////////////////
 
 
-void driveToCrank(){	//Assumes that robot is lined up with crank
+void driveToCrank(){	//Assumes that robot is below ramp lined up with crank
+  //TODO: Incorporate RPS X check?
+  
   float inches = 31.5;
   int counts = inches * 5.25;
   int left_motor_adjust = 0, right_motor_adjust = 0;
@@ -497,8 +500,8 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
 
     //4 (before ramp)
     check_heading(heading);
-    servoSalt.SetDegree(saltRamp);
-    driveToCrank();
+    servoSalt.SetDegree(saltRamp);  //Salt into ground
+    driveToCrank();                 //gets it in front of crank
     servoSalt.SetDegree(saltDown);
     check_heading(90);
     LCD.Write("PART 4");
