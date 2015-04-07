@@ -19,6 +19,7 @@ AnalogInputPin CdS(FEHIO::P0_0);
 DigitalInputPin bump (FEHIO::P1_3);
 
 
+float CRANK_X = 55;
 
 
 void forward(float);
@@ -461,6 +462,21 @@ float saltStart = 62, saltUp = 92, saltDown = 162, saltRamp = 172, saltGarage = 
     //Print the current battery state to the screen
     LCD.SetOrientation(FEHLCD::East);
     LCD.Clear( FEHLCD::Black );
+    
+    //Ask to initialize necessary coordinates?
+    LCD.WriteLine("Initailize coordinates?");
+    LCD.WriteLine("L - yes");
+    LCD.WriteLine("R - no");
+    while(true){
+        if(buttons.RightButtonPressed()){
+            break;
+        }
+        else if(buttons.LeftButtonPressed()){
+            LCD.Clear( FEHLCD::Black);
+            
+        }
+            
+    }
 
    //Initialize RPS
     RPS.InitializeMenu();
