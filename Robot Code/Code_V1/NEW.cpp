@@ -390,6 +390,53 @@ void check_heading(float heading){
     } //check_heading
 // ////////////////////////////////
 
+void driveToCrank(){	//Assumes that robot is lined up with crank
+  float inches = 31.5;
+  int counts = inches * 5.25;
+  int left_motor_adjust = 0, right_motor_adjust = 0;
+  float heading;
+  int cycle_spent_off_track = 0;
+
+  right_encoder.ResetCounts();
+  left_encoder.ResetCounts();
+
+  right_motor.SetPercent(60);
+  left_motor.SetPercent(60);
+
+  while( left_encoder.Counts() + right_encoder.Counts() / 2. < counts){
+    heading = RPS.Heading();
+    cycle_spent_off_track++;	//Assume robot is off track unbtil proven otherwise
+
+    if(heading <= 90 - cycle_spent_off_track/2){		//needs minor correction
+      left_motor_adjust = 0;
+      right_motor_adjust++;
+      if(heading <= 88 - cycle_spent_off_track){	//needs major correction
+    right_motor_adjust += 2;
+      }
+      right_motor.SetPercent(60 + right_motor_adjust/3);
+      left_motor.SetPercent(60 + left_motor_adjust/3);
+    }
+    else if(heading >= 90 + cycle_spent_off_track/2){	//needs minor correction
+      right_motor_adjust = 0;
+      left_motor_adjust++;
+      if(heading >= 92 + cycle_spent_off_track){	//needs major correction
+        left_motor_adjust += 2;
+      }
+      right_motor.SetPercent(60 + right_motor_adjust/3);
+      left_motor.SetPercent(60 + left_motor_adjust/3);
+    }
+    else{			//on track, reset cycles spent off track
+      cycle_spent_off_track -= 2;
+    }
+    Sleep(50);
+  }
+
+  //Stop Motors
+  right_motor.Stop();
+  left_motor.Stop();
+
+}
+
 
 int main(void)
 {
