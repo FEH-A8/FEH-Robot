@@ -21,8 +21,12 @@ DigitalInputPin bump (FEHIO::P1_3);
 
 float CRANK_X = 30.6;
 float CRANK_Y = 55.9;
+float CRANK_HEADING = 90;
 float CRANK_X_offset = 0;
 
+float BUTTON_X = 14.3;
+float BUTTON_Y = 63.4;
+float BUTTON_HEADING = 134;
 
 void forward(float);
 void backward(float);
@@ -44,7 +48,7 @@ void turnCrank(){
             //Sleep(500);
             servo.SetDegree(60);
             Sleep(500);
-            backward(1.9); //move backwkards an inch
+            backward(1.8); //move backwkards an inch
             //Sleep(500);
 
             //read new value and increment if light reading changed
@@ -101,7 +105,7 @@ const int SERVO_WHITE = 90;
 
       //move back and try again
       //move back and try again
-      check_heading(137);
+      //check_heading(137);
       forward(2+i);
       backward(2);
     }
@@ -115,7 +119,7 @@ const int SERVO_WHITE = 90;
 
       //move back and try again
       //move back and try again
-      check_heading(137);
+      //check_heading(137);
       forward(2+i);
       backward(2);
     }
@@ -128,7 +132,7 @@ const int SERVO_WHITE = 90;
       if(RPS.BlueButtonPressed()){ return( true ); }
 
       //move back and try again
-      check_heading(137);
+      //check_heading(137);
       forward(2+i);
       backward(2);
     }
@@ -378,7 +382,7 @@ void check_heading(float heading){
 // Taken from working code, edited to no longer sway around 90 degrees
 void check_heading(float heading, double timeout){
 
-    const int turnPercent = 40;
+    const int turnPercent = 43;
         float change = (int)(abs(heading-RPS.Heading()));
         if(change>180){ change = 360-change; }
         double ahora = TimeNow();
@@ -425,7 +429,7 @@ void driveToCrank(){	//Assumes that robot is below ramp lined up with crank
     float dest_y = CRANK_Y;
     float delta_x = dest_x- my_x, delta_y = dest_y - my_y;
     float theta = atan((delta_y)/(abs(delta_x)));
-    float inches = 32.8 * (sqrt((delta_y * delta_y) + (delta_x*delta_x)))/delta_y;
+    float inches = 33 * (sqrt((delta_y * delta_y) + (delta_x*delta_x)))/delta_y;
     float angle = 90;
     if(delta_x < 0){
         angle+=theta;
@@ -492,8 +496,8 @@ void check_y(float end_y){
     float start_heading = RPS.Heading();
     //check_heading(90);
 
-    do { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
-      closeness = (RPS.Y() - end_y);
+    closeness = (RPS.Y() - end_y);
+     while (closeness > .7) { //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
       pos_neg_multiplier = (((int)(closeness < 0)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
 
       closeness = abs(closeness);
@@ -503,16 +507,52 @@ void check_y(float end_y){
         left_motor.SetPercent(65 * pos_neg_multiplier);
       }
       else{
-        right_motor.SetPercent(45 * pos_neg_multiplier);
-        left_motor.SetPercent(45 * pos_neg_multiplier);
+        right_motor.SetPercent(40 * pos_neg_multiplier);
+        left_motor.SetPercent(40 * pos_neg_multiplier);
       }
-    } while (closeness > 1);
+
+      closeness = (RPS.Y() - end_y);
+    }
     right_motor.SetPercent(0);
     left_motor.SetPercent(0);
 
     if(abs(RPS.Heading() - start_heading) >= 2){
         check_heading(start_heading);
     }
+}
+
+void check_x(float end_x){
+    //Taken from lab 2
+    //Assumes that robot is aligned so it travels forward along positive Y axis
+    //float state[3] = current_state();
+    float closeness;
+    int pos_neg_multiplier;
+
+    //Turn toward positive y axis
+    //float start_heading = RPS.Heading();
+    //check_heading(90);
+     closeness = (RPS.X() - end_x);
+     while (closeness > .7){ //while( (closeness = abs(RPS.X() - end_x)) > 1. ){
+
+      pos_neg_multiplier = (((int)(closeness < 0)) << 1) - 1;		//gives +1 if you need to travel forward, -1 if backward
+
+      closeness = abs(closeness);
+      //strong pulse motor if farther away
+      if( closeness > 3){
+        right_motor.SetPercent(65 * pos_neg_multiplier);
+        left_motor.SetPercent(65 * pos_neg_multiplier);
+      }
+      else{
+        right_motor.SetPercent(40 * pos_neg_multiplier);
+        left_motor.SetPercent(40 * pos_neg_multiplier);
+      }
+
+      closeness = (RPS.X() - end_x);
+    }
+    right_motor.SetPercent(0);
+    left_motor.SetPercent(0);
+
+    //NO CEHCK HEADING
 }
 
 
@@ -550,7 +590,7 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
         }
         else if(buttons.LeftPressed()){
             LCD.Clear( FEHLCD::Black);
-            LCD.WriteLine("Place the robot in front of the crank and then press the middle button to grab the coordinate. Press R to cancel.");
+            LCD.WriteLine("Place the robot in front of the crank and then press the middle/left button to grab the coordinate. Press R to exit.");
             while(true){
                 if(buttons.RightPressed()){
                     break;
@@ -558,8 +598,16 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
                 else if(buttons.MiddlePressed()){
                     CRANK_X = RPS.X();
                     CRANK_Y = RPS.Y();
-                    LCD.Write("Position recorded is (");
+                    CRANK_HEADING = RPS.Heading();
+                    LCD.Write("Crank Position recorded is (");
                     LCD.Write(CRANK_X); LCD.Write(", "); LCD.Write(CRANK_Y); LCD.WriteLine(").");
+                }
+                else if(buttons.LeftPressed()){
+                    BUTTON_X = RPS.X();
+                    BUTTON_Y = RPS.Y();
+                    BUTTON_HEADING = RPS.Heading();
+                    LCD.Write("BUTTON Position recorded is (");
+                    LCD.Write(BUTTON_X); LCD.Write(", "); LCD.Write(BUTTON_Y); LCD.Write(", "); LCD.Write(BUTTON_HEADING);
                 }
             }
 
@@ -581,8 +629,9 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
     servoSalt.SetDegree(saltStart);
     Sleep(1000);
 
-
-    while(CdS.Value() > .6);
+    double start = TimeNow();
+    double CdSTimeOut = 30;
+    while(CdS.Value() > .6 && TimeNow() - start < CdSTimeOut );
 
     //Order of steps from sheet
     //1
@@ -592,12 +641,13 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
 
     backward(11);
     turn_left(43);
+    check_heading(135);
 
     LCD.Write("PART 1");
 
     //2
-    backward(7.9);
-    check_heading(136);
+    backward(8.1);
+    check_heading(137);
     servoSalt.SetDegree(saltDown);
     Sleep(800);
     forward(2.5);
@@ -605,19 +655,21 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
     LCD.Write("PART 2");
 
     //3
-    turn_right(110);
+    turn_right(116);
     forward(11);
-    turn_left(57);
+    check_x(CRANK_X);
+    turn_left(53);
+
     LCD.Write("PART 3");
 
     //4 (before ramp)
-    check_heading(heading);
+    check_heading(CRANK_HEADING);
     servoSalt.SetDegree(saltRamp);  //Salt into ground
     driveToCrank();   //gets it in front of crank
     servoSalt.SetDegree(saltDown);
     check_y(CRANK_Y);
     if(RPS.X() >= CRANK_X-.2){
-        check_heading(heading);
+        check_heading(CRANK_HEADING);
     }
     LCD.Write("PART 4");
 
@@ -629,12 +681,13 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
 
 
     //6-10  moving from crank to garage
-    backward(2);
+    backward(2.2);
     float save_y = RPS.Y();
 
     //Clamp on to snow and swing it right
     servoSalt.SetDegree(saltUp);
     turn_right(102);
+    check_heading(0);
     backward(1.5);
     servoSalt.SetDegree(165);
     Sleep(1000);
@@ -669,13 +722,13 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
     backward(19);
     turn_right(41);
     //check_heading(319, 2.5); //where 2.5 is the timeout
-    backward(3);
+    backward(3.2);
 
 
     //11  push salt into garage
     servoSalt.SetDegree(saltGarage);
     Sleep(1000);
-    forward(6);
+    forward(6.2);
 
     /* Remove pushing salt back in
     servoSalt.SetDegree(saltDown);
@@ -688,9 +741,10 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
 
     //12 go to buttons
     forward(8);
-
-    turn_left(57);
-    check_heading(138);
+    check_y(BUTTON_Y);
+    check_heading(180);
+    check_x(BUTTON_X);
+    check_heading(BUTTON_HEADING);
     //forward(2);
     pushButtons();
 
@@ -703,8 +757,14 @@ float saltStart = 62, saltUp = 92, saltDown = 158, saltRamp = 172, saltGarage = 
 
     if(RPS.OilDirec() == 1){ //turning right
         servoSalt.SetDegree(oil_pull);
+        backward(3);
+        servoSalt.SetDegree(oil_pull-10);
+        Sleep(500);
+        forward(100, 5);
     } else /*turning left*/{
         servoSalt.SetDegree(oil_push);
+        Sleep(600);
+        backward(100, 8);
     }
 
     return 0;
